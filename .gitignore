@@ -1,0 +1,7 @@
+*.py[cod]
+esauth.sublime-project
+esauth.sublime-workspace
+build/*
+*.egg-info
+.coverage
+todo.org
