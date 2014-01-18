@@ -1,4 +1,12 @@
 import esauth
+import ldapom
+from pyramid.decorator import reify
+
+
+class UserAlreadyExist(Exception):
+    def __init__(self, uid):
+        self.uid = uid
+        self.message = u"User {0} already exist.".format(uid)
 
 
 class LDAPDataSourceMixin(object):
@@ -13,7 +21,7 @@ class LDAPDataSourceMixin(object):
 
     def get_all_users(self):
         base = self.settings.get('ldap.users_base')
-        return self.lc.search(search_filter='objectClass=account', base=base)
+        return self.lc.search(search_filter='objectClass=inetOrgPerson', base=base)
 
     def get_user_entry(self, uid):
         base = self.settings.get('ldap.users_base')
@@ -33,8 +41,36 @@ class LDAPDataSourceMixin(object):
             raise KeyError("Group {0} not found".format(name))
         return entry
 
+    def create_user_entry(self, userinfo):
+        base = self.settings.get('ldap.users_base')
+        classes = ['top', 'inetOrgPerson']
+
+        if userinfo.get('uidNumber') and userinfo.get('gidNumber'):
+            classes.append('posixAccount')
+            userinfo['cn'] = u"{givenName} {sn}".format(**userinfo)
+
+        password = userinfo.pop('userPassword', None)
+
+        dn = 'uid={0},{1}'.format(userinfo['uid'], base)
+        entry = ldapom.LDAPEntry(self.lc, dn)
+        if entry.exists():
+            raise UserAlreadyExist(userinfo['uid'])
+        entry.objectClass = classes
+        for key, value in userinfo.items():
+            if not value:
+                continue
+            setattr(entry, key, value)
+        entry.save()
+        if password:
+            entry.set_password(password)
+        return entry
+
 
 class UserResource(LDAPDataSourceMixin, object):
+
+    @reify
+    def __name__(self):
+        return list(self.entry.uid)[0]
 
     def __init__(self, request, entry):
         self.request = request
@@ -49,18 +85,32 @@ class UserResource(LDAPDataSourceMixin, object):
 
 
 class UserListResource(LDAPDataSourceMixin, object):
+
+    __name__ = "users"
+
     def __init__(self, request):
         self.request = request
 
     def __getitem__(self, uid):
-        return UserResource(self.request, self.get_user_entry(uid))
+        resource = UserResource(self.request, self.get_user_entry(uid))
+        resource.__parent__ = self
+        return resource
 
     def __iter__(self):
         for entry in self.get_all_users():
-            yield UserResource(self.request, entry)
+            resource = UserResource(self.request, entry)
+            resource.__parent__ = self
+            yield resource
+
+    def add(self, userinfo):
+        return self.create_user_entry(userinfo)
 
 
 class GroupResource(LDAPDataSourceMixin, object):
+
+    @reify
+    def __name__(self):
+        return list(self.entry.cn)[0]
 
     def __init__(self, request, entry):
         self.request = request
@@ -76,19 +126,32 @@ class GroupResource(LDAPDataSourceMixin, object):
 
 
 class GroupListResource(LDAPDataSourceMixin, object):
+
+    __name__ = "groups"
+
     def __init__(self, request):
         self.request = request
 
     def __getitem__(self, name):
-        return GroupResource(self.request, self.get_group_entry(name))
+        resource = GroupResource(self.request, self.get_group_entry(name))
+        resource.__parent__ = self
+        return resource
 
     def __iter__(self):
         for entry in self.get_all_groups():
-            yield GroupResource(self.request, entry)
+            resource = GroupResource(self.request, entry)
+            resource.__parent__ = self
+            yield resource
 
 
 class Root(dict):
+
+    __name__ = None
+    __parent__ = None
+
     def __init__(self, request):
         self.request = request
         self['users'] = UserListResource(request)
+        self['users'].__parent__ = self
         self['groups'] = GroupListResource(request)
+        self['groups'].__parent__ = self

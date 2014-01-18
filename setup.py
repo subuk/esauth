@@ -1,6 +1,7 @@
 from setuptools import setup, find_packages
 
 requires = [
+    'wtforms',
     'pyramid',
     'pyramid_jinja2',
     'pyramid_webassets',

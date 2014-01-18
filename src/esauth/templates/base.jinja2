@@ -13,6 +13,7 @@
     {% assets "all_css" %}
       <link href="{{ ASSET_URL }}" rel="stylesheet">
     {% endassets %}
+
   </head>
 
   <body>
@@ -40,6 +41,8 @@
       {% endblock %}
     </div>
 
+    <br>
+
     <div id="footer">
       <div class="container">
         <p class="text-muted">Place sticky footer content here.</p>
@@ -53,5 +56,7 @@
     {% assets "all_js" %}
       <script type="text/javascript" src="{{ ASSET_URL }}"></script>
     {% endassets %}
+    {% block extra_js %}
+    {% endblock %}
   </body>
 </html>

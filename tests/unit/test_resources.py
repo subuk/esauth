@@ -53,6 +53,10 @@ class GroupResourceTestCase(base.UnitTestCase):
         self.assertEqual(len(ret), 2)
         self.assertListEqual(ret, [1, 2])
 
+    def test_name(self):
+        self.entry.cn = set(['oneone'])
+        self.assertEqual(self.unit.__name__, 'oneone')
+
 
 class UserListResourceTestCase(base.UnitTestCase):
 
@@ -78,12 +82,16 @@ class UserListResourceTestCase(base.UnitTestCase):
         self.assertEqual(len(rets), 2)
         UserResource.assert_called_with(self.request, 'DUMMY_ENTRY_2')
 
+    @mock.patch('esauth.resources.LDAPDataSourceMixin.create_user_entry')
+    def test_add(self, create_user_entry):
+        self.unit.add('oneone')
+        create_user_entry.assert_called_with('oneone')
 
 class UserResourceTestCase(base.UnitTestCase):
     def setUp(self):
         self.request = testing.DummyRequest()
         self.entry = mock.Mock(spec=ldapom.LDAPEntry)
-        self.entry.uid = ['testuser']
+        self.entry.uid = set(['testuser'])
         self.entry.uidNumber = 10000
         self.entry.gidNumber = 10000
         self.unit = resources.UserResource(self.request, self.entry)
@@ -94,6 +102,10 @@ class UserResourceTestCase(base.UnitTestCase):
         self.assertEqual(ret['uid'], 'testuser')
         self.assertEqual(ret['uidNumber'], 10000)
         self.assertEqual(ret['gidNumber'], 10000)
+
+    def test_name(self):
+        self.entry.uid = set(['oneone'])
+        self.assertEqual(self.unit.__name__, 'oneone')
 
 
 class LDAPDataSourceMixinTestCase(base.UnitTestCase):
@@ -107,7 +119,7 @@ class LDAPDataSourceMixinTestCase(base.UnitTestCase):
 
         ret = self.unit.get_all_users()
         self.assertEqual(ret, "TWOTWO")
-        registry['lc'].search.assert_called_with(search_filter='objectClass=account', base='dc=oneone')
+        registry['lc'].search.assert_called_with(search_filter='objectClass=inetOrgPerson', base='dc=oneone')
 
     @mock.patch('esauth.registry', spec=Registry)
     def test_get_all_groups(self, registry):
@@ -159,6 +171,79 @@ class LDAPDataSourceMixinTestCase(base.UnitTestCase):
 
         with self.assertRaises(KeyError):
             self.unit.get_group_entry('lgroup')
+
+    @mock.patch('esauth.registry')
+    @mock.patch('ldapom.LDAPEntry')
+    def test_create_user_entry_already_exist(self, LDAPEntry, registry):
+        registry.settings = {'ldap.users_base': 'dc=oneone'}
+        entry = mock.Mock()
+        entry.exists.return_value = True
+        LDAPEntry.return_value = entry
+
+        with self.assertRaises(resources.UserAlreadyExist):
+            self.unit.create_user_entry({
+                'uid': 'luser',
+            })
+
+    @mock.patch('esauth.registry')
+    @mock.patch('ldapom.LDAPEntry')
+    def test_create_user_entry_ok_no_posix_class(self, LDAPEntry, registry):
+        registry.settings = {'ldap.users_base': 'dc=oneone'}
+        entry = mock.Mock()
+        entry.exists.return_value = False
+        LDAPEntry.return_value = entry
+        self.unit.create_user_entry({
+            'uid': 'luser',
+            'userPassword': '123',
+        })
+        self.assertEqual(entry.uid, 'luser')
+        self.assertListEqual(entry.objectClass, ['top', 'inetOrgPerson'])
+
+    @mock.patch('esauth.registry')
+    @mock.patch('ldapom.LDAPEntry')
+    def test_create_user_entry_set_password(self, LDAPEntry, registry):
+        registry.settings = {'ldap.users_base': 'dc=oneone'}
+        entry = mock.Mock()
+        entry.exists.return_value = False
+        LDAPEntry.return_value = entry
+        self.unit.create_user_entry({
+            'uid': 'luser',
+            'userPassword': '123',
+        })
+        entry.set_password.assert_called_with('123')
+
+    @mock.patch('esauth.registry')
+    @mock.patch('ldapom.LDAPEntry')
+    def test_create_user_entry_ok_posix_class(self, LDAPEntry, registry):
+        registry.settings = {'ldap.users_base': 'dc=oneone'}
+        entry = mock.Mock()
+        entry.exists.return_value = False
+        LDAPEntry.return_value = entry
+        self.unit.create_user_entry({
+            'uid': 'luser',
+            'userPassword': '123',
+            'uidNumber': 111,
+            'gidNumber': 111,
+            'givenName': 'gname',
+            'sn': 'sn'
+        })
+        self.assertEqual(entry.uid, 'luser')
+        self.assertListEqual(entry.objectClass, ['top', 'inetOrgPerson', 'posixAccount'])
+
+    @mock.patch('esauth.registry')
+    @mock.patch('ldapom.LDAPEntry')
+    def test_create_user_entry_blank_key_ignored(self, LDAPEntry, registry):
+        registry.settings = {'ldap.users_base': 'dc=oneone'}
+        entry = mock.Mock()
+        entry.exists.return_value = False
+        LDAPEntry.return_value = entry
+
+        self.unit.create_user_entry({
+            'uid': 'luser',
+            'userPassword': '123',
+            'blanKey': '',
+        })
+        self.assertTrue(entry.blanKey)
 
 
 class RootFactoryTestCase(base.UnitTestCase):

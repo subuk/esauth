@@ -1,0 +1,52 @@
+{% extends "base_with_menu.jinja2" %}
+{% from 'form_macro.jinja2' import render_field %}
+
+{% block extra_js %}
+<script type="text/javascript">
+$(function(){
+  if ($('#posix_account').is(':checked')){
+    $('#posix_user_form').show();
+  } else {
+    $('#posix_user_form').hide();
+  }
+
+  $('#posix_account').click(function(){
+    $('#posix_user_form').toggle();
+  })
+});
+
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col-md-8">
+      <h1>User info</h1>
+      <form method="post" action="">
+        <div id="main_user_form">
+        {% for field in main_user_form %}
+          {{ render_field(field) }}
+        {% endfor %}
+        </div>
+
+        <div class="form-group">
+          <div class="checkbox">
+            <label>
+              <input {% if posix_account %}checked="checked"{% endif %} name="posix_account" id="posix_account" type="checkbox"> Account for POSIX OS?
+            </label>
+          </div>
+        </div>
+
+        <div id="posix_user_form">
+        {% for field in posix_user_form %}
+          {{ render_field(field) }}
+        {% endfor %}
+        </div>
+
+        <button type="submit" class="btn btn-block btn-primary">Submit</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
