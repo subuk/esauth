@@ -31,6 +31,11 @@ class GroupListResourceTestCase(base.UnitTestCase):
         self.assertEqual(len(rets), 2)
         GroupResource.assert_called_with(self.request, 'DUMMY_ENTRY_2')
 
+    @mock.patch('esauth.resources.LDAPDataSourceMixin.create_group_entry')
+    def test_add(self, create_group_entry):
+        self.unit.add({'cn': 'tgroup'})
+        create_group_entry.assert_called_with({'cn': 'tgroup'})
+
 
 class GroupResourceTestCase(base.UnitTestCase):
 
@@ -86,6 +91,7 @@ class UserListResourceTestCase(base.UnitTestCase):
     def test_add(self, create_user_entry):
         self.unit.add('oneone')
         create_user_entry.assert_called_with('oneone')
+
 
 class UserResourceTestCase(base.UnitTestCase):
     def setUp(self):
@@ -192,12 +198,13 @@ class LDAPDataSourceMixinTestCase(base.UnitTestCase):
         entry = mock.Mock()
         entry.exists.return_value = False
         LDAPEntry.return_value = entry
-        self.unit.create_user_entry({
+        ret = self.unit.create_user_entry({
             'uid': 'luser',
             'userPassword': '123',
         })
         self.assertEqual(entry.uid, 'luser')
         self.assertListEqual(entry.objectClass, ['top', 'inetOrgPerson'])
+        self.assertEqual(ret, entry)
 
     @mock.patch('esauth.registry')
     @mock.patch('ldapom.LDAPEntry')
@@ -219,7 +226,7 @@ class LDAPDataSourceMixinTestCase(base.UnitTestCase):
         entry = mock.Mock()
         entry.exists.return_value = False
         LDAPEntry.return_value = entry
-        self.unit.create_user_entry({
+        ret = self.unit.create_user_entry({
             'uid': 'luser',
             'userPassword': '123',
             'uidNumber': 111,
@@ -229,6 +236,7 @@ class LDAPDataSourceMixinTestCase(base.UnitTestCase):
         })
         self.assertEqual(entry.uid, 'luser')
         self.assertListEqual(entry.objectClass, ['top', 'inetOrgPerson', 'posixAccount'])
+        self.assertEqual(ret, entry)
 
     @mock.patch('esauth.registry')
     @mock.patch('ldapom.LDAPEntry')
@@ -244,6 +252,29 @@ class LDAPDataSourceMixinTestCase(base.UnitTestCase):
             'blanKey': '',
         })
         self.assertTrue(entry.blanKey)
+
+    @mock.patch('esauth.registry')
+    @mock.patch('ldapom.LDAPEntry')
+    def test_create_group_entry(self, LDAPEntry, registry):
+        entry = mock.Mock()
+        entry.exists.return_value = False
+        LDAPEntry.return_value = entry
+        registry.settings = {'ldap.groups_base': 'dc=base'}
+        ret = self.unit.create_group_entry({'cn': 'tgroup'})
+        LDAPEntry.assert_called_with(registry['lc'], 'cn=tgroup,dc=base')
+        self.assertEqual(entry.member, "")
+        self.assertEqual(entry.cn, "tgroup")
+        entry.save.assert_called_with()
+        self.assertEqual(ret, entry)
+
+    @mock.patch('esauth.registry')
+    @mock.patch('ldapom.LDAPEntry')
+    def test_create_group_entry_already_exist(self, LDAPEntry, registry):
+        entry = mock.Mock()
+        entry.exists.return_value = True
+        LDAPEntry.return_value = entry
+        with self.assertRaises(resources.GroupAlreadyExist):
+            self.unit.create_group_entry({'cn': 'tgroup'})
 
 
 class RootFactoryTestCase(base.UnitTestCase):

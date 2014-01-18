@@ -3,10 +3,16 @@ import ldapom
 from pyramid.decorator import reify
 
 
-class UserAlreadyExist(Exception):
-    def __init__(self, uid):
-        self.uid = uid
-        self.message = u"User {0} already exist.".format(uid)
+class LDAPEntryAlreadyExist(Exception):
+    pass
+
+
+class UserAlreadyExist(LDAPEntryAlreadyExist):
+    pass
+
+
+class GroupAlreadyExist(LDAPEntryAlreadyExist):
+    pass
 
 
 class LDAPDataSourceMixin(object):
@@ -63,6 +69,18 @@ class LDAPDataSourceMixin(object):
         entry.save()
         if password:
             entry.set_password(password)
+        return entry
+
+    def create_group_entry(self, groupinfo):
+        base = self.settings.get('ldap.groups_base')
+        dn = 'cn={0},{1}'.format(groupinfo['cn'], base)
+        entry = ldapom.LDAPEntry(self.lc, dn)
+        if entry.exists():
+            raise GroupAlreadyExist(groupinfo['cn'])
+        entry.objectClass = ['top', 'groupOfNames']
+        entry.cn = groupinfo['cn']
+        entry.member = ""
+        entry.save()
         return entry
 
 
@@ -142,6 +160,9 @@ class GroupListResource(LDAPDataSourceMixin, object):
             resource = GroupResource(self.request, entry)
             resource.__parent__ = self
             yield resource
+
+    def add(self, groupinfo):
+        return self.create_group_entry(groupinfo)
 
 
 class Root(dict):

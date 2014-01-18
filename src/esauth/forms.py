@@ -36,3 +36,12 @@ class PosixUserAccountForm(forms.Form):
             'homeDirectory': self.data['home_directory'],
             'loginShell': self.data['login_shell'],
         }
+
+
+class GroupForm(forms.Form):
+    name = forms.StringField("Name", [validators.Required()])
+
+    def ldap_dict(self):
+        return {
+            'cn': self.data['name'],
+        }

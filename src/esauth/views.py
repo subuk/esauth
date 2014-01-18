@@ -64,6 +64,41 @@ class UserCreateFormView(object):
         return HTTPFound(model_path(self.context[userinfo['uid']]))
 
 
+@view_defaults(context=resources.GroupListResource, renderer='group_form.jinja2', name='add')
+class GroupAddView(object):
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.response = {}
+
+    @view_config(request_method='GET')
+    def get(self):
+        return {
+            'form': forms.GroupForm(),
+        }
+
+    @view_config(request_method='POST')
+    def post(self):
+        form = forms.GroupForm(self.request.POST)
+        self.response.update({
+            'form': form,
+        })
+        if not form.validate():
+            return self.response
+
+        try:
+            self.context[form.data['name']]
+        except KeyError:
+            pass
+        else:
+            form.name.errors.append(u"Group {name} already exist".format(**form.data))
+            return self.response
+
+        self.context.add(form.ldap_dict())
+        return HTTPFound(model_path(self.context[form.data['name']]))
+
+
 @view_config(context=resources.GroupListResource, renderer='group_list.jinja2')
 def group_list_view(context, request):
     return {
