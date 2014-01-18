@@ -1,0 +1,27 @@
+{% extends "base.jinja2" %}
+
+{% block page_content %}
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-2">
+      <ul class="nav nav-pills nav-stacked admin-menu">
+          <li {% if request.path == '/' %}class="active"{% endif %}>
+            <a href="/"><i class="fa fa-home fa-fw"></i>Home</a>
+          </li>
+          <li {% if request.path.startswith('/users') %}class="active"{% endif %}>
+            <a href="/users/"><i class="fa fa-user fa-fw"></i>Users</a>
+          </li>
+          <li {% if request.path.startswith('/groups') %}class="active"{% endif %}>
+            <a href="/groups/"><i class="fa fa-group fa-fw"></i>Groups</a>
+          </li>
+      </ul>
+    </div>
+    <div class="col-md-10">
+      {% block content %}
+      {% endblock %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,19 +1,23 @@
-
 from pyramid.view import view_config
 import esauth.resources as resources
 
 
-@view_config(context=resources.UserListResource, renderer='json')
+@view_config(context=resources.Root, renderer='base_with_menu.jinja2')
+def dashboard_view(context, request):
+    return {}
+
+
+@view_config(context=resources.UserListResource, renderer='user_list.jinja2')
 def users_list_view(context, request):
     return {
-        'users': [u.as_dict() for u in context]
+        'users': [u.entry for u in context]
     }
 
 
-@view_config(context=resources.GroupListResource, renderer='json')
+@view_config(context=resources.GroupListResource, renderer='group_list.jinja2')
 def group_list_view(context, request):
     return {
-        'groups': [u.as_dict() for u in context]
+        'groups': [u for u in context]
     }
 
 

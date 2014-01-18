@@ -1,8 +1,9 @@
-
 from setuptools import setup, find_packages
 
 requires = [
     'pyramid',
+    'pyramid_jinja2',
+    'pyramid_webassets',
     'waitress',
     'ldapom',
 ]

@@ -1,0 +1,31 @@
+{% extends "base_with_menu.jinja2" %}
+
+{% block content %}
+<div class="container">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>UID</th>
+        <th>UID Number</th>
+        <th>GID Number</th>
+        <th>Home directory</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      <tr>
+        <td>{{ user.uid |join(', ') }}</td>
+        <td>{{ user.uidNumber }}</td>
+        <td>{{ user.gidNumber }}</td>
+        <td>{{ user.homeDirectory }}</td>
+      </tr>
+      {% endfor %}
+      <tr>
+        <td colspan="4">
+          <a class="btn btn-block btn-primary" href="add/">Add</a>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+{% endblock %}
