@@ -119,6 +119,8 @@ class UserResourceTestCase(base.UnitTestCase):
         self.entry.uid = set(['testuser'])
         self.entry.uidNumber = 10000
         self.entry.gidNumber = 10000
+        self.entry.sn = ['Surnnname']
+        self.entry.givenName = ['Givenname']
         self.unit = resources.UserResource(self.request, self.entry)
 
     def test_name(self):
@@ -130,6 +132,28 @@ class UserResourceTestCase(base.UnitTestCase):
         self.entry.givenName = set(['F'])
         self.entry.sn = set(['L'])
         self.assertEqual(unicode(self.unit), u'F L (uid)')
+
+    def test_set_username(self):
+        self.unit.username = 'hello'
+        self.assertEqual(self.entry.uid, 'hello')
+
+    def test_set_first_name(self):
+        self.unit.first_name = ['first']
+        self.assertEqual(self.entry.givenName, ['first'])
+        self.assertEqual(self.entry.cn, 'first Surnnname')
+
+    def test_set_last_name(self):
+        self.unit.last_name = ['last']
+        self.assertEqual(self.entry.sn, ['last'])
+        self.assertEqual(self.entry.cn, 'Givenname last')
+
+    def test_set_uid_number(self):
+        self.unit.uid_number = 100
+        self.assertEqual(self.entry.uidNumber, 100)
+
+    def test_set_gid_number(self):
+        self.unit.gid_number = 100
+        self.assertEqual(self.entry.gidNumber, 100)
 
     @mock.patch('esauth.resources.LDAPDataSourceMixin.get_all_groups')
     def test_remove(self, get_all_groups):

@@ -99,21 +99,82 @@ class UserResource(LDAPDataSourceMixin, object):
     def __unicode__(self):
         return u"{0} ({1})".format(self.full_name, self.username)
 
-    @reify
+    @property
     def username(self):
         return list(self.entry.uid)[0]
 
-    @reify
+    @username.setter
+    def username(self, value):
+        self.entry.uid = value
+
+    @property
     def first_name(self):
         return list(self.entry.givenName)[0]
 
-    @reify
+    @first_name.setter
+    def first_name(self, value):
+        self.entry.givenName = value
+        self.entry.cn = self.full_name
+
+    @property
     def last_name(self):
         return list(self.entry.sn)[0]
 
-    @reify
+    @last_name.setter
+    def last_name(self, value):
+        self.entry.sn = value
+        self.entry.cn = self.full_name
+
+    @property
     def full_name(self):
         return u"{0} {1}".format(self.first_name, self.last_name)
+
+    @property
+    def uid_number(self):
+        return self.entry.uidNumber
+
+    @uid_number.setter
+    def uid_number(self, value):
+        if not value:
+            return
+        self.entry.uidNumber = int(value)
+
+    @property
+    def gid_number(self):
+        return self.entry.gidNumber
+
+    @gid_number.setter
+    def gid_number(self, value):
+        if not value:
+            return
+        self.entry.gidNumber = int(value)
+
+    @property
+    def home_directory(self):
+        return self.entry.homeDirectory
+
+    @home_directory.setter
+    def home_directory(self, value):
+        if not value:
+            return
+        self.entry.homeDirectory = value
+
+    @property
+    def login_shell(self):
+        return self.entry.loginShell
+
+    @login_shell.setter
+    def login_shell(self, value):
+        if not value:
+            return
+        self.entry.loginShell = value
+
+    @reify
+    def is_posix_account(self):
+        return self.entry.is_posixAccount
+
+    def save(self):
+        self.entry.save()
 
     def remove(self):
         for group in self.get_all_groups():

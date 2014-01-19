@@ -50,15 +50,33 @@ class UserCreateFormView(object):
             return self.response
 
         try:
-            self.context[form.data['login']]
+            self.context[form.data['username']]
         except KeyError:
             pass
         else:
-            form.login.errors.append(u"User {login} already exist".format(**form.data))
+            form.username.errors.append(u"User {username} already exist".format(**form.data))
             return self.response
 
         self.context.add(form.ldap_dict())
-        return HTTPFound(model_path(self.context[form.data['login']]))
+        return HTTPFound(model_path(self.context[form.data['username']]))
+
+
+@view_defaults(context=resources.UserResource, renderer='user_form.jinja2', name='edit')
+class UserEditFormView(UserCreateFormView):
+
+    def get_form_kwargs(self):
+        kwargs = super(UserEditFormView, self).get_form_kwargs()
+        kwargs['obj'] = self.context
+        return kwargs
+
+    def post(self):
+        form = self.get_form()
+        if not form.validate():
+            return self.response
+
+        form.populate_obj(self.context)
+        self.context.save()
+        return HTTPFound(model_path(self.context.__parent__))
 
 
 @view_defaults(context=resources.GroupListResource, renderer='group_form.jinja2', name='add')

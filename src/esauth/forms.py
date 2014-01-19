@@ -34,7 +34,7 @@ class RequiredTogether(validators.Required):
 
 
 class UserForm(forms.Form):
-    login = forms.StringField('Login', [validators.Length(min=2, max=16)])
+    username = forms.StringField('Login', [validators.Length(min=2, max=16)])
     first_name = forms.StringField('First name', [validators.Required(), validators.Length(max=255)])
     last_name = forms.StringField('Last name', [validators.Required(), validators.Length(max=255)])
     description = forms.TextAreaField('Description')
@@ -48,7 +48,7 @@ class UserForm(forms.Form):
 
     def ldap_dict(self):
         return {
-            'uid': self.data['login'],
+            'uid': self.data['username'],
             'givenName': self.data['first_name'],
             'sn': self.data['last_name'],
             'description': self.data['description'],

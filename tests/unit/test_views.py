@@ -36,25 +36,25 @@ class UserCreateFormViewTestCase(base.UnitTestCase):
     def test_post_user_already_exist(self, PosixUserAccountForm, UserForm):
         context = mock.MagicMock(spec=testing.DummyResource)
         request = testing.DummyRequest(params={
-            'login': 'user',
+            'username': 'user',
         })
-        UserForm().data = {'login': 'user'}
+        UserForm().data = {'username': 'user'}
 
         unit = self.create_unit(context, request)
         unit.post()
-        UserForm().login.errors.append.assert_called_with("User user already exist")
+        UserForm().username.errors.append.assert_called_with("User user already exist")
 
     @mock.patch('esauth.forms.UserForm')
     @mock.patch('esauth.forms.PosixUserAccountForm')
     def test_post_ok(self, PosixUserAccountForm, UserForm):
         context = mock.MagicMock(spec=testing.DummyResource)
         request = testing.DummyRequest(params={
-            'login': 'user',
+            'username': 'user',
         })
         context.__getitem__.side_effect = [KeyError('user'), testing.DummyResource()]
         context.add = mock.Mock()
         context.add.return_value = 'OK'
-        UserForm().data = {'login': 'user'}
+        UserForm().data = {'username': 'user'}
         UserForm().ldap_dict.return_value = {'uid': 'user'}
 
         unit = self.create_unit(context, request)
@@ -259,3 +259,39 @@ class UserRemoveViewTestCase(base.UnitTestCase):
         ret = unit.post()
         self.assertIsInstance(ret, r.HTTPFound)
         context.remove.assert_called_with()
+
+
+class UserEditFormViewTestCase(base.UnitTestCase):
+
+    def create_unit(self, context, request):
+        return views.UserEditFormView(context, request)
+
+    def test_get_form_kwargs(self):
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        unit = self.create_unit(context, request)
+        ret = unit.get_form_kwargs()
+        self.assertEqual(ret['obj'], context)
+        self.assertIsNone(ret['formdata'], None)
+
+    @mock.patch('esauth.forms.UserForm')
+    def test_post_invalid(self, UserForm):
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        UserForm().validate.return_value = False
+        unit = self.create_unit(context, request)
+        unit.post()
+        UserForm().validate.assert_called_with()
+
+    @mock.patch('esauth.forms.UserForm')
+    def test_post_ok(self, UserForm):
+        context = testing.DummyResource()
+        context.save = mock.Mock()
+        request = testing.DummyRequest()
+        UserForm().validate.return_value = True
+        unit = self.create_unit(context, request)
+        ret = unit.post()
+        UserForm().validate.assert_called_with()
+        UserForm().populate_obj.assert_called_with(context)
+        context.save.assert_called_with()
+        self.assertIsInstance(ret, r.HTTPFound)
