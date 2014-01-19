@@ -1,4 +1,7 @@
+import os
 from setuptools import setup, find_packages
+
+read = lambda path: open(path).read()
 
 requires = [
     'wtforms',
@@ -23,6 +26,8 @@ setup(
     author='Matvey Kruglov',
     author_email='kubus@openpz.org',
     url='http://bitbucket.org/subuk/esauth',
+    description='Simple LDAP account management tool',
+    long_description=read('README.rst'),
     packages=find_packages('src'),
     package_dir={'': 'src'},
     include_package_data=True,
@@ -36,5 +41,16 @@ setup(
         'paste.app_factory': [
             'main = esauth.main:paste_wsgi_app',
         ],
+        'console_scripts': [
+            'esauth-make-config = esauth.scripts:generate_prod_config',
+        ]
     },
+    classifiers=[
+        "Programming Language :: Python",
+        "Framework :: Pyramid",
+        "Development Status :: 3 - Alpha",
+        "Topic :: Internet :: WWW/HTTP",
+        "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
+        "Topic :: System :: Systems Administration :: Authentication/Directory :: LDAP",
+    ],
 )

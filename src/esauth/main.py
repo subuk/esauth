@@ -1,3 +1,4 @@
+import os
 import random
 import string
 import logging
@@ -21,7 +22,8 @@ def configure_webassets_jinja2_integration(config):
 
 def configure_webassets(config):
     settings = config.get_settings()
-    settings.setdefault('webassets.base_dir', 'src/esauth/static')
+    static_root = os.path.dirname(__file__) + '/static'
+    settings.setdefault('webassets.base_dir', static_root)
     settings.setdefault('webassets.base_url', '/static')
     config.include('pyramid_webassets')
     config.add_webasset('all_js', esauth.assets.all_js)
@@ -91,7 +93,7 @@ def configure_security(config):
 def make_app(settings):
     config = Configurator(registry=esauth.registry)
     config.setup_registry(settings=settings)
-    if asbool(settings['debug']):
+    if asbool(settings.get('debug')):
         configure_common_debug_options(config)
     configure_ldap_connection(config)
     configure_views(config)
