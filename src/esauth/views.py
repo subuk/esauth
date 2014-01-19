@@ -25,43 +25,40 @@ class UserCreateFormView(object):
         self.request = request
         self.response = {}
 
+    def get_form_kwargs(self):
+        return {
+            'formdata': self.request.POST or None,
+        }
+
+    def get_form(self):
+        form = forms.UserForm(**self.get_form_kwargs())
+        self.response.update({
+            'form': form,
+        })
+        return form
+
     @view_config(request_method='GET')
     def get(self):
         return {
-            'main_user_form': forms.UserForm(),
-            'posix_user_form': forms.PosixUserAccountForm(),
+            'form': self.get_form(),
         }
 
     @view_config(request_method='POST')
     def post(self):
-        main_user_form = forms.UserForm(self.request.POST)
-        posix_user_form = forms.PosixUserAccountForm(self.request.POST)
-        self.response.update({
-            'main_user_form': main_user_form,
-            'posix_user_form': posix_user_form,
-            'posix_account': self.request.POST.get('posix_account')
-        })
-
-        if not main_user_form.validate():
-            return self.response
-
-        if 'posix_account' in self.request.POST and not posix_user_form.validate():
+        form = self.get_form()
+        if not form.validate():
             return self.response
 
         try:
-            self.context[main_user_form.data['login']]
+            self.context[form.data['login']]
         except KeyError:
             pass
         else:
-            main_user_form.login.errors.append(u"User {login} already exist".format(**main_user_form.data))
+            form.login.errors.append(u"User {login} already exist".format(**form.data))
             return self.response
 
-        userinfo = {}
-        userinfo.update(main_user_form.ldap_dict())
-        userinfo.update(posix_user_form.ldap_dict())
-
-        self.context.add(userinfo)
-        return HTTPFound(model_path(self.context[userinfo['uid']]))
+        self.context.add(form.ldap_dict())
+        return HTTPFound(model_path(self.context[form.data['login']]))
 
 
 @view_defaults(context=resources.GroupListResource, renderer='group_form.jinja2', name='add')

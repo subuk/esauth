@@ -16,14 +16,11 @@ class UserCreateFormViewTestCase(base.UnitTestCase):
         unit = self.create_unit(context, request)
 
         ret = unit.get()
-        self.assertIn('main_user_form', ret)
-        self.assertIn('posix_user_form', ret)
-        self.assertIsInstance(ret['main_user_form'], views.forms.UserForm)
-        self.assertIsInstance(ret['posix_user_form'], views.forms.PosixUserAccountForm)
+        self.assertIn('form', ret)
+        self.assertIsInstance(ret['form'], views.forms.UserForm)
 
     @mock.patch('esauth.forms.UserForm')
-    @mock.patch('esauth.forms.PosixUserAccountForm')
-    def test_post_main_form_invalid(self, PosixUserAccountForm, UserForm):
+    def test_post_form_invalid(self, UserForm):
         context = mock.MagicMock(spec=testing.DummyResource)
         request = testing.DummyRequest(params={
             'one': 'two',
@@ -31,23 +28,8 @@ class UserCreateFormViewTestCase(base.UnitTestCase):
         UserForm().validate.return_value = False
         unit = self.create_unit(context, request)
         ret = unit.post()
-        self.assertIn('main_user_form', ret)
-        self.assertEqual(ret['main_user_form'], UserForm())
-
-    @mock.patch('esauth.forms.UserForm')
-    @mock.patch('esauth.forms.PosixUserAccountForm')
-    def test_post_posix_account_form_invalid(self, PosixUserAccountForm, UserForm):
-        context = mock.MagicMock(spec=testing.DummyResource)
-        request = testing.DummyRequest(params={
-            'posix_account': 'yes',
-        })
-        UserForm().validate.return_value = True
-        PosixUserAccountForm().validate.return_value = False
-        unit = self.create_unit(context, request)
-        ret = unit.post()
-        self.assertIn('posix_account', ret)
-        self.assertEqual(ret['posix_account'], 'yes')
-        self.assertEqual(ret['posix_user_form'], PosixUserAccountForm())
+        self.assertIn('form', ret)
+        self.assertEqual(ret['form'], UserForm())
 
     @mock.patch('esauth.forms.UserForm')
     @mock.patch('esauth.forms.PosixUserAccountForm')

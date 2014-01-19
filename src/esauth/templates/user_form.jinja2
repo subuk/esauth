@@ -3,15 +3,49 @@
 
 {% block extra_js %}
 <script type="text/javascript">
-$(function(){
-  if ($('#posix_account').is(':checked')){
-    $('#posix_user_form').show();
-  } else {
-    $('#posix_user_form').hide();
-  }
+var POSIX_FIELDS = ['#uid_number', '#gid_number', '#home_directory', '#login_shell'];
 
+var clear_posix_fields = function(){
+  $(POSIX_FIELDS).each(function(idx, selector){
+    $(selector).val('');
+  });
+}
+
+var hide_posix_fields = function(){
+  $(POSIX_FIELDS).each(function(idx, selector){
+    $(selector).parent().hide();
+  });
+}
+
+var any_posix_field_has_value = function(){
+  var i, max, selector;
+  for (i=0, max=POSIX_FIELDS.length; i<max; i++) {
+    selector = POSIX_FIELDS[i];
+    if ($(selector).val()){
+      return true;
+    }
+  }
+  return false;
+}
+
+var toggle_posix_fields = function(){
+
+  $(POSIX_FIELDS).each(function(idx, selector){
+    $(selector).parent().toggle();
+  });
+  clear_posix_fields();
+}
+
+$(function(){
+
+  if (!any_posix_field_has_value()){
+    hide_posix_fields();
+    $("#posix_account").removeAttr("checked");
+  } else {
+    $("#posix_account").attr("checked", "checked");
+  }
   $('#posix_account').click(function(){
-    $('#posix_user_form').toggle();
+    toggle_posix_fields();
   })
 });
 
@@ -23,29 +57,22 @@ $(function(){
   <div class="row">
     <div class="col-md-8">
       <h1>User info</h1>
-      <form method="post" action="">
-        <div id="main_user_form">
-        {% for field in main_user_form %}
-          {{ render_field(field) }}
-        {% endfor %}
-        </div>
 
+      <form method="post" action="">
         <div class="form-group">
           <div class="checkbox">
             <label>
-              <input {% if posix_account %}checked="checked"{% endif %} name="posix_account" id="posix_account" type="checkbox"> Account for POSIX OS?
+              <input id="posix_account" type="checkbox"> POSIX Account?
             </label>
           </div>
         </div>
 
-        <div id="posix_user_form">
-        {% for field in posix_user_form %}
+        {% for field in form %}
           {{ render_field(field) }}
         {% endfor %}
-        </div>
-
         <button type="submit" class="btn btn-block btn-primary">Submit</button>
       </form>
+
     </div>
   </div>
 </div>
