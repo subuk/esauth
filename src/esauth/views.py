@@ -58,7 +58,7 @@ class UserCreateFormView(object):
             return self.response
 
         self.context.add(form.ldap_dict())
-        return HTTPFound(model_path(self.context[form.data['username']]))
+        return HTTPFound(model_path(self.context))
 
 
 @view_defaults(context=resources.UserResource, renderer='user_form.jinja2', name='edit')
@@ -199,14 +199,3 @@ def group_list_view(context, request):
     return {
         'groups': context,
     }
-
-
-@view_config(context=resources.UserResource, renderer='json')
-def user_view(context, request):
-    return {'user': context.as_dict()}
-
-
-@view_config(context=resources.GroupResource, name='members', renderer='json')
-def group_members_view(context, request):
-    render = lambda entry: user_view(resources.UserResource(request, entry), request)
-    return {'members': [render(entry) for entry in context.get_members()]}

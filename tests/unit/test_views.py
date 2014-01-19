@@ -52,6 +52,8 @@ class UserCreateFormViewTestCase(base.UnitTestCase):
             'username': 'user',
         })
         context.__getitem__.side_effect = [KeyError('user'), testing.DummyResource()]
+        context.__name__ = None
+        context.__parent__ = None
         context.add = mock.Mock()
         context.add.return_value = 'OK'
         UserForm().data = {'username': 'user'}
