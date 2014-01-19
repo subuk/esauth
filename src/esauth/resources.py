@@ -51,9 +51,10 @@ class LDAPDataSourceMixin(object):
         base = self.settings.get('ldap.users_base')
         classes = ['top', 'inetOrgPerson']
 
+        userinfo['cn'] = u"{givenName} {sn}".format(**userinfo)
+
         if userinfo.get('uidNumber') and userinfo.get('gidNumber'):
             classes.append('posixAccount')
-            userinfo['cn'] = u"{givenName} {sn}".format(**userinfo)
 
         password = userinfo.pop('userPassword', None)
 
@@ -66,6 +67,7 @@ class LDAPDataSourceMixin(object):
             if not value:
                 continue
             setattr(entry, key, value)
+
         entry.save()
         if password:
             entry.set_password(password)

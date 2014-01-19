@@ -189,6 +189,8 @@ class LDAPDataSourceMixinTestCase(base.UnitTestCase):
         with self.assertRaises(resources.UserAlreadyExist):
             self.unit.create_user_entry({
                 'uid': 'luser',
+                'givenName': 'first_name',
+                'sn': 'last_name',
             })
 
     @mock.patch('esauth.registry')
@@ -201,6 +203,8 @@ class LDAPDataSourceMixinTestCase(base.UnitTestCase):
         ret = self.unit.create_user_entry({
             'uid': 'luser',
             'userPassword': '123',
+            'givenName': 'first_name',
+            'sn': 'last_name',
         })
         self.assertEqual(entry.uid, 'luser')
         self.assertListEqual(entry.objectClass, ['top', 'inetOrgPerson'])
@@ -216,6 +220,8 @@ class LDAPDataSourceMixinTestCase(base.UnitTestCase):
         self.unit.create_user_entry({
             'uid': 'luser',
             'userPassword': '123',
+            'givenName': 'first_name',
+            'sn': 'last_name',
         })
         entry.set_password.assert_called_with('123')
 
@@ -250,6 +256,8 @@ class LDAPDataSourceMixinTestCase(base.UnitTestCase):
             'uid': 'luser',
             'userPassword': '123',
             'blanKey': '',
+            'givenName': 'first_name',
+            'sn': 'last_name',
         })
         self.assertTrue(entry.blanKey)
 
