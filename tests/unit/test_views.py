@@ -211,3 +211,25 @@ class GroupEditViewTestCase(base.UnitTestCase):
         ret = unit.post()
         GroupForm().validate.assert_called_with()
         self.assertIsInstance(ret, r.HTTPFound)
+
+
+class GroupDeleteViewTestCase(base.UnitTestCase):
+
+    def create_unit(self, context, request):
+        return views.GroupRemoveView(context, request)
+
+    def test_get(self):
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        unit = self.create_unit(context, request)
+        ret = unit.get()
+        self.assertEqual(ret, {})
+
+    def test_post(self):
+        context = testing.DummyResource()
+        context.remove = mock.Mock()
+        request = testing.DummyRequest(params={})
+        unit = self.create_unit(context, request)
+        ret = unit.post()
+        context.remove.assert_called_with()
+        self.assertIsInstance(ret, r.HTTPFound)

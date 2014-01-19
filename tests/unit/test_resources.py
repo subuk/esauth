@@ -72,6 +72,11 @@ class GroupResourceTestCase(base.UnitTestCase):
         ret = self.unit.members
         self.assertEqual(len(ret), 2)
 
+    def test_unicode(self):
+        self.entry.cn = ['Name']
+        ret = unicode(self.unit)
+        self.assertEqual(ret, u'Name')
+
 
 class UserListResourceTestCase(base.UnitTestCase):
 

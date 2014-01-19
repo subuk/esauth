@@ -150,6 +150,12 @@ class GroupResource(LDAPDataSourceMixin, object):
             ret.append(list(entry.uid)[0])
         return ret
 
+    def remove(self):
+        self.entry.delete()
+
+    def __unicode__(self):
+        return ','.join(self.entry.cn)
+
 
 class GroupListResource(LDAPDataSourceMixin, object):
 

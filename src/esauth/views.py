@@ -139,14 +139,28 @@ class GroupEditView(GroupAddView):
         return HTTPFound(model_path(self.context.__parent__))
 
 
-def group_edit_view(context, request):
-    return {'group': context.as_dict()}
+@view_defaults(context=resources.GroupResource, renderer='group_remove.jinja2', name='remove')
+class GroupRemoveView(object):
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.response = {}
+
+    @view_config(request_method='GET')
+    def get(self):
+        return self.response
+
+    @view_config(request_method='POST')
+    def post(self):
+        self.context.remove()
+        return HTTPFound(model_path(self.context.__parent__))
 
 
 @view_config(context=resources.GroupListResource, renderer='group_list.jinja2')
 def group_list_view(context, request):
     return {
-        'groups': [u for u in context]
+        'groups': context,
     }
 
 
