@@ -11,14 +11,14 @@ def dashboard_view(context, request):
     return {}
 
 
-@view_config(context=resources.UserListResource, renderer='user_list.jinja2')
+@view_config(context=resources.UserListResource, renderer='user/list.jinja2')
 def users_list_view(context, request):
     return {
         'users': context,
     }
 
 
-@view_defaults(context=resources.UserListResource, renderer='user_form.jinja2', name='add')
+@view_defaults(context=resources.UserListResource, renderer='user/form.jinja2', name='add')
 class UserCreateFormView(object):
 
     def __init__(self, context, request):
@@ -66,7 +66,7 @@ class UserCreateFormView(object):
         return HTTPFound(model_path(self.context))
 
 
-@view_defaults(context=resources.UserResource, renderer='user_form.jinja2', name='edit')
+@view_defaults(context=resources.UserResource, renderer='user/form.jinja2', name='edit')
 class UserEditFormView(UserCreateFormView):
 
     def get_form_kwargs(self):
@@ -88,7 +88,7 @@ class UserEditFormView(UserCreateFormView):
         return HTTPFound(model_path(self.context.__parent__))
 
 
-@view_defaults(context=resources.GroupListResource, renderer='group_form.jinja2', name='add')
+@view_defaults(context=resources.GroupListResource, renderer='group/form.jinja2', name='add')
 class GroupAddView(object):
 
     def __init__(self, context, request):
@@ -142,7 +142,7 @@ class GroupAddView(object):
         return HTTPFound(model_path(self.context[form.data['name']], 'edit'))
 
 
-@view_defaults(context=resources.GroupResource, renderer='group_form.jinja2', name='edit')
+@view_defaults(context=resources.GroupResource, renderer='group/form.jinja2', name='edit')
 class GroupEditView(GroupAddView):
 
     def get_form_kwargs(self):
@@ -176,7 +176,7 @@ class GroupEditView(GroupAddView):
         return HTTPFound(model_path(self.context.__parent__))
 
 
-@view_defaults(context=resources.GroupResource, renderer='group_remove.jinja2', name='remove')
+@view_defaults(context=resources.GroupResource, renderer='group/remove.jinja2', name='remove')
 class GroupRemoveView(object):
 
     def __init__(self, context, request):
@@ -199,7 +199,7 @@ class GroupRemoveView(object):
         return HTTPFound(model_path(self.context.__parent__))
 
 
-@view_defaults(context=resources.UserResource, renderer='user_remove.jinja2', name='remove')
+@view_defaults(context=resources.UserResource, renderer='user/remove.jinja2', name='remove')
 class UserRemoveView(object):
     def __init__(self, context, request):
         self.context = context
@@ -221,7 +221,7 @@ class UserRemoveView(object):
         return HTTPFound(model_path(self.context.__parent__))
 
 
-@view_config(context=resources.GroupListResource, renderer='group_list.jinja2')
+@view_config(context=resources.GroupListResource, renderer='group/list.jinja2')
 def group_list_view(context, request):
     return {
         'groups': context,
@@ -245,7 +245,7 @@ def logout(request):
     return HTTPFound('/')
 
 
-@view_defaults(context=resources.Root, renderer='login.jinja2', permission=security.NO_PERMISSION_REQUIRED, name='login')
+@view_defaults(context=resources.Root, renderer='auth/login.jinja2', permission=security.NO_PERMISSION_REQUIRED, name='login')
 class LoginView(object):
 
     form_class = forms.LoginForm
