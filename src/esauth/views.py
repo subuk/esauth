@@ -1,4 +1,5 @@
-from pyramid.view import view_config, view_defaults
+from pyramid.view import view_config, view_defaults, forbidden_view_config
+from pyramid import security
 from pyramid.httpexceptions import HTTPFound
 from pyramid.traversal import model_path
 import esauth.resources as resources
@@ -225,3 +226,58 @@ def group_list_view(context, request):
     return {
         'groups': context,
     }
+
+
+LOGIN_URL = '/login'
+
+
+@forbidden_view_config(renderer='403.jinja2')
+def forbidden_view(response, request):
+    if not getattr(request, 'user', None):
+        return HTTPFound("{0}?next={1}".format(LOGIN_URL, request.path))
+    request.response.status = 403
+    return {}
+
+
+@view_config(context=resources.Root, name='logout')
+def logout(request):
+    security.forget(request)
+    return HTTPFound('/')
+
+
+@view_defaults(context=resources.Root, renderer='login.jinja2', permission=security.NO_PERMISSION_REQUIRED, name='login')
+class LoginView(object):
+
+    form_class = forms.LoginForm
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.response = {}
+
+    def get_form_kwargs(self):
+        return {
+            'formdata': self.request.POST or None,
+        }
+
+    def get_form(self):
+        form = self.form_class(**self.get_form_kwargs())
+        self.response.update({
+            'form': form,
+        })
+        return form
+
+    @view_config(request_method='GET')
+    def get(self):
+        return {
+            'form': self.get_form()
+        }
+
+    @view_config(request_method='POST')
+    def post(self):
+        form = self.get_form()
+        if not form.validate():
+            return self.response
+        security.remember(self.request, 'admin_user')
+        redirect_url = self.request.params.get('next') or '/'
+        return HTTPFound(redirect_url)

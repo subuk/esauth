@@ -1,6 +1,7 @@
 import esauth
 import ldapom
 from pyramid.decorator import reify
+from pyramid.security import Allow, Authenticated
 
 
 class LDAPEntryAlreadyExist(Exception):
@@ -266,6 +267,10 @@ class Root(dict):
 
     __name__ = None
     __parent__ = None
+    __acl__ = [
+        (Allow, Authenticated, 'edit'),
+        (Allow, Authenticated, 'view'),
+    ]
 
     def __init__(self, request):
         self.request = request

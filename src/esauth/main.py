@@ -76,6 +76,18 @@ def configure_session(config):
     config.include('pyramid_beaker')
 
 
+def configure_security(config):
+    from pyramid.authentication import SessionAuthenticationPolicy
+    from pyramid.authorization import ACLAuthorizationPolicy
+
+    authn_policy = SessionAuthenticationPolicy()
+    authz_policy = ACLAuthorizationPolicy()
+
+    config.set_authentication_policy(authn_policy)
+    config.set_authorization_policy(authz_policy)
+    config.set_default_permission('edit')
+
+
 def make_app(settings):
     config = Configurator(registry=esauth.registry)
     config.setup_registry(settings=settings)
@@ -87,6 +99,7 @@ def make_app(settings):
     configure_session(config)
     configure_webassets(config)
     configure_webassets_jinja2_integration(config)
+    configure_security(config)
     config.set_root_factory(esauth.resources.Root)
     return config.make_wsgi_app()
 

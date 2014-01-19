@@ -1,6 +1,7 @@
 
 import wtforms as forms
 import wtforms.validators as validators
+import esauth
 
 ValidationError = forms.ValidationError
 
@@ -83,3 +84,14 @@ class GroupForm(forms.Form):
         return {
             'cn': self.data['name'],
         }
+
+
+class LoginForm(forms.Form):
+    password = forms.PasswordField()
+
+    def validate_password(self, field):
+        lc = esauth.registry['lc']
+        pw = field.data
+        login = esauth.registry.settings['ldap.bind_dn']
+        if not lc.can_bind(login, pw):
+            raise ValidationError('Invalid password')
