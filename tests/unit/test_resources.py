@@ -44,23 +44,33 @@ class GroupResourceTestCase(base.UnitTestCase):
         self.entry = mock.Mock(spec=ldapom.LDAPEntry)
         self.unit = resources.GroupResource(self.request, self.entry)
 
-    def test_as_dict(self):
-        self.entry.cn = ['CN']
-        ret = self.unit.as_dict()
-        self.assertIsInstance(ret, dict)
-        self.assertEqual(ret['cn'], 'CN')
-
-    @mock.patch('esauth.resources.LDAPDataSourceMixin.lc')
-    def test_get_members(self, lc):
-        lc.get_entry.side_effect = [1, 2]
-        self.entry.member = ['memberOne', 'memberTwo']
-        ret = self.unit.get_members()
-        self.assertEqual(len(ret), 2)
-        self.assertListEqual(ret, [1, 2])
+    def test_magic_name(self):
+        self.entry.cn = set(['oneone'])
+        self.assertEqual(self.unit.__name__, 'oneone')
 
     def test_name(self):
         self.entry.cn = set(['oneone'])
-        self.assertEqual(self.unit.__name__, 'oneone')
+        self.assertEqual(self.unit.name, 'oneone')
+
+    @mock.patch('esauth.registry')
+    def test_members_getter(self, registry):
+        u_entry = mock.MagicMock()
+        u_entry.uid = set(['ss'])
+        registry['lc'].get_entry.return_value = u_entry
+        self.entry.member = ['uid=123,dc=x', 'uid=321,dc=x']
+
+        ret = self.unit.members
+        self.assertEqual(len(ret), 2)
+
+    @mock.patch('esauth.registry')
+    def test_members_getter_ignore_blank(self, registry):
+        u_entry = mock.MagicMock()
+        u_entry.uid = set(['ss'])
+        registry['lc'].get_entry.return_value = u_entry
+        self.entry.member = ['uid=123,dc=x', 'uid=321,dc=x', '']
+
+        ret = self.unit.members
+        self.assertEqual(len(ret), 2)
 
 
 class UserListResourceTestCase(base.UnitTestCase):

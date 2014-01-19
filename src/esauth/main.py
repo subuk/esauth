@@ -23,8 +23,12 @@ def configure_webassets(config):
 
 
 def configure_template_engine(config):
+    from pyramid.traversal import model_path
+
     config.include('pyramid_jinja2')
     config.add_jinja2_search_path("esauth:templates")
+    env = config.get_jinja2_environment()
+    env.globals['model_url'] = model_path
 
 
 def configure_ldap_connection(config):

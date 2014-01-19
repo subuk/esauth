@@ -6,18 +6,12 @@
     <thead>
       <tr>
         <th>Name</th>
-        <th>Members</th>
       </tr>
     </thead>
     <tbody>
       {% for group in groups %}
       <tr>
-        <td>{{ group.entry.cn|join(',') }}</td>
-        <td>
-          {% for member in group.get_members() %}
-            {{ member.uid|first }}
-          {% endfor %}
-        </td>
+        <td><a href="{{ model_url(group, 'edit') }}">{{ group.entry.cn|join(',') }}</a></td>
       </tr>
       {% endfor %}
       <tr>

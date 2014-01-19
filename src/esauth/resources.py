@@ -128,21 +128,27 @@ class UserListResource(LDAPDataSourceMixin, object):
 
 class GroupResource(LDAPDataSourceMixin, object):
 
-    @reify
-    def __name__(self):
-        return list(self.entry.cn)[0]
-
     def __init__(self, request, entry):
         self.request = request
         self.entry = entry
 
-    def get_members(self):
-        return [self.lc.get_entry(dn) for dn in self.entry.member]
+    @reify
+    def __name__(self):
+        return list(self.entry.cn)[0]
 
-    def as_dict(self):
-        return {
-            'cn': list(self.entry.cn)[0],
-        }
+    @reify
+    def name(self):
+        return self.__name__
+
+    @reify
+    def members(self):
+        ret = []
+        for dn in self.entry.member:
+            if not dn:
+                continue
+            entry = self.lc.get_entry(dn)
+            ret.append(list(entry.uid)[0])
+        return ret
 
 
 class GroupListResource(LDAPDataSourceMixin, object):

@@ -40,6 +40,7 @@ class PosixUserAccountForm(forms.Form):
 
 class GroupForm(forms.Form):
     name = forms.StringField("Name", [validators.Required()])
+    members = forms.SelectMultipleField('Members')
 
     def ldap_dict(self):
         return {

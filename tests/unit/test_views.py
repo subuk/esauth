@@ -83,15 +83,37 @@ class UserCreateFormViewTestCase(base.UnitTestCase):
 class GroupAddViewTestCase(base.UnitTestCase):
 
     def create_unit(self, context, request):
+        get_all_users = mock.Mock()
+        get_all_users.return_value = [mock.Mock()]
+        context.get_all_users = get_all_users
         return views.GroupAddView(context, request)
 
-    def test_get(self):
+    @mock.patch('esauth.forms.GroupForm')
+    def test_get(self, GroupForm):
         context = testing.DummyResource()
         request = testing.DummyRequest()
         unit = self.create_unit(context, request)
         ret = unit.get()
         self.assertIn('form', ret)
-        self.assertIsInstance(ret['form'], views.forms.GroupForm)
+        self.assertEqual(ret['form'], GroupForm())
+
+    @mock.patch('esauth.forms.GroupForm')
+    def test_get_form_on_get_request(self, GroupForm):
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        unit = self.create_unit(context, request)
+        unit.get_form()
+        GroupForm.assert_called_with(formdata={})
+
+    @mock.patch('esauth.forms.GroupForm')
+    def test_get_form_on_post_request(self, GroupForm):
+        context = testing.DummyResource()
+        request = testing.DummyRequest(params={
+            'name': 'hello',
+        })
+        unit = self.create_unit(context, request)
+        unit.get_form()
+        GroupForm.assert_called_with(formdata={'name': 'hello'})
 
     @mock.patch('esauth.forms.GroupForm')
     def test_post_invalid(self, GroupForm):
@@ -127,4 +149,65 @@ class GroupAddViewTestCase(base.UnitTestCase):
 
         unit = self.create_unit(context, request)
         ret = unit.post()
+        self.assertIsInstance(ret, r.HTTPFound)
+
+    def test_get_form_kwargs(self):
+        context = testing.DummyResource()
+        request = testing.DummyRequest(params={
+            'name': 'test',
+        })
+        unit = self.create_unit(context, request)
+        ret = unit.get_form_kwargs()
+        self.assertIn('formdata', ret)
+        self.assertDictEqual(ret['formdata'], {'name': 'test'})
+
+
+class GroupEditViewTestCase(base.UnitTestCase):
+
+    def create_unit(self, context, request):
+        return views.GroupEditView(context, request)
+
+    def test_get_form_kwargs(self):
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        unit = self.create_unit(context, request)
+        ret = unit.get_form_kwargs()
+        self.assertIn('obj', ret)
+        self.assertEqual(ret['obj'], context)
+
+    @mock.patch('esauth.forms.GroupForm')
+    def test_post_invalid(self, GroupForm):
+        context = testing.DummyResource()
+        get_all_users = mock.Mock()
+        context.get_all_users = get_all_users
+        request = testing.DummyRequest({
+            'one': 'two',
+        })
+
+        GroupForm().validate.return_value = False
+        get_all_users.return_value = [mock.Mock(), mock.Mock()]
+        unit = self.create_unit(context, request)
+        unit.post()
+        GroupForm().validate.assert_called_with()
+
+    @mock.patch('esauth.forms.GroupForm')
+    def test_post(self, GroupForm):
+        context = testing.DummyResource()
+        get_all_users = mock.Mock()
+        context.get_all_users = get_all_users
+        context.entry = mock.Mock()
+        context.get_user_entry = mock.Mock()
+        data = {
+            'name': 'hello',
+            'members': ['one', 'two']
+        }
+        request = testing.DummyRequest(data)
+
+        GroupForm().validate.return_value = True
+        GroupForm().data = data
+        get_all_users.return_value = [mock.Mock(), mock.Mock()]
+
+        unit = self.create_unit(context, request)
+        ret = unit.post()
+        GroupForm().validate.assert_called_with()
         self.assertIsInstance(ret, r.HTTPFound)

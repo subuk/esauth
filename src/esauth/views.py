@@ -72,18 +72,33 @@ class GroupAddView(object):
         self.request = request
         self.response = {}
 
+    def get_form_kwargs(self):
+        return {
+            'formdata': self.request.POST,
+        }
+
+    def get_form(self):
+        form = forms.GroupForm(**self.get_form_kwargs())
+
+        form.members.choices = []
+        for user in self.context.get_all_users():
+            uid = user.uid.pop()
+            form.members.choices.append((uid, uid))
+
+        self.response.update({
+            'form': form,
+        })
+        return form
+
     @view_config(request_method='GET')
     def get(self):
         return {
-            'form': forms.GroupForm(),
+            'form': self.get_form(),
         }
 
     @view_config(request_method='POST')
     def post(self):
-        form = forms.GroupForm(self.request.POST)
-        self.response.update({
-            'form': form,
-        })
+        form = self.get_form()
         if not form.validate():
             return self.response
 
@@ -96,7 +111,36 @@ class GroupAddView(object):
             return self.response
 
         self.context.add(form.ldap_dict())
-        return HTTPFound(model_path(self.context[form.data['name']]))
+        return HTTPFound(model_path(self.context[form.data['name']], 'edit'))
+
+
+@view_defaults(context=resources.GroupResource, renderer='group_form.jinja2', name='edit')
+class GroupEditView(GroupAddView):
+
+    def get_form_kwargs(self):
+        kwargs = super(GroupEditView, self).get_form_kwargs()
+        kwargs['obj'] = self.context
+        return kwargs
+
+    def post(self):
+        form = self.get_form()
+        if not form.validate():
+            return self.response
+
+        self.context.entry.cn = form.data['name']
+        members = []
+        for uid in form.data['members']:
+            member = self.context.get_user_entry(uid)
+            members.append(member.dn)
+        if not members:
+            members = ['']
+        self.context.entry.member = members
+        self.context.entry.save()
+        return HTTPFound(model_path(self.context.__parent__))
+
+
+def group_edit_view(context, request):
+    return {'group': context.as_dict()}
 
 
 @view_config(context=resources.GroupListResource, renderer='group_list.jinja2')
@@ -109,11 +153,6 @@ def group_list_view(context, request):
 @view_config(context=resources.UserResource, renderer='json')
 def user_view(context, request):
     return {'user': context.as_dict()}
-
-
-@view_config(context=resources.GroupResource, renderer='json')
-def group_view(context, request):
-    return {'group': context.as_dict()}
 
 
 @view_config(context=resources.GroupResource, name='members', renderer='json')
