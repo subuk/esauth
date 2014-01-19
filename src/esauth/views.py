@@ -122,18 +122,23 @@ class GroupEditView(GroupAddView):
         kwargs['obj'] = self.context
         return kwargs
 
+    def get_form(self):
+        form = super(GroupEditView, self).get_form()
+        del form.name
+        return form
+
     def post(self):
         form = self.get_form()
         if not form.validate():
             return self.response
 
-        self.context.entry.cn = form.data['name']
         members = []
         for uid in form.data['members']:
             member = self.context.get_user_entry(uid)
             members.append(member.dn)
         if not members:
             members = ['']
+
         self.context.entry.member = members
         self.context.entry.save()
         return HTTPFound(model_path(self.context.__parent__))
