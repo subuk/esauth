@@ -63,6 +63,25 @@ class UserCreateFormViewTestCase(base.UnitTestCase):
         ret = unit.post()
         self.assertIsInstance(ret, r.HTTPFound)
 
+    @mock.patch('esauth.forms.UserForm')
+    @mock.patch('esauth.forms.PosixUserAccountForm')
+    def test_post_ok_flash_message(self, PosixUserAccountForm, UserForm):
+        context = mock.MagicMock(spec=testing.DummyResource)
+        request = testing.DummyRequest(params={
+            'username': 'user',
+        })
+        context.__getitem__.side_effect = [KeyError('user'), testing.DummyResource()]
+        context.__name__ = None
+        context.__parent__ = None
+        context.add = mock.Mock()
+        context.add.return_value = 'OK'
+        UserForm().data = {'username': 'user'}
+        UserForm().ldap_dict.return_value = {'uid': 'user'}
+
+        unit = self.create_unit(context, request)
+        unit.post()
+        self.assertTrue(len(request.session.peek_flash()), 1)
+
 
 class GroupAddViewTestCase(base.UnitTestCase):
 
@@ -135,6 +154,19 @@ class GroupAddViewTestCase(base.UnitTestCase):
         ret = unit.post()
         self.assertIsInstance(ret, r.HTTPFound)
 
+    @mock.patch('esauth.forms.GroupForm')
+    def test_post_ok_flash_message(self, GroupForm):
+        context = testing.DummyResource()
+        request = testing.DummyRequest(params={
+            'name': 'test',
+        })
+        GroupForm().data = {'name': 'test'}
+        context.add = lambda x: context.__setitem__('test', testing.DummyResource('OK'))
+
+        unit = self.create_unit(context, request)
+        unit.post()
+        self.assertTrue(len(request.session.peek_flash()), 1)
+
     def test_get_form_kwargs(self):
         context = testing.DummyResource()
         request = testing.DummyRequest(params={
@@ -177,6 +209,7 @@ class GroupEditViewTestCase(base.UnitTestCase):
     @mock.patch('esauth.forms.GroupForm')
     def test_post(self, GroupForm):
         context = testing.DummyResource()
+        context.name = 'name'
         get_all_users = mock.Mock()
         context.get_all_users = get_all_users
         context.entry = mock.Mock()
@@ -197,8 +230,31 @@ class GroupEditViewTestCase(base.UnitTestCase):
         self.assertIsInstance(ret, r.HTTPFound)
 
     @mock.patch('esauth.forms.GroupForm')
+    def test_post_ok_flash_message(self, GroupForm):
+        context = testing.DummyResource()
+        context.name = 'name'
+        get_all_users = mock.Mock()
+        context.get_all_users = get_all_users
+        context.entry = mock.Mock()
+        context.get_user_entry = mock.Mock()
+        data = {
+            'name': 'hello',
+            'members': ['one', 'two']
+        }
+        request = testing.DummyRequest(data)
+
+        GroupForm().validate.return_value = True
+        GroupForm().data = data
+        get_all_users.return_value = [mock.Mock(), mock.Mock()]
+
+        unit = self.create_unit(context, request)
+        unit.post()
+        self.assertTrue(len(request.session.peek_flash()), 1)
+
+    @mock.patch('esauth.forms.GroupForm')
     def test_post_no_members(self, GroupForm):
         context = testing.DummyResource()
+        context.name = 'name'
         get_all_users = mock.Mock()
         context.get_all_users = get_all_users
         context.entry = mock.Mock()
@@ -233,12 +289,22 @@ class GroupDeleteViewTestCase(base.UnitTestCase):
 
     def test_post(self):
         context = testing.DummyResource()
+        context.name = 'name'
         context.remove = mock.Mock()
         request = testing.DummyRequest(params={})
         unit = self.create_unit(context, request)
         ret = unit.post()
         context.remove.assert_called_with()
         self.assertIsInstance(ret, r.HTTPFound)
+
+    def test_ok_flash_message(self):
+        context = testing.DummyResource()
+        context.name = 'name'
+        context.remove = mock.Mock()
+        request = testing.DummyRequest(params={})
+        unit = self.create_unit(context, request)
+        unit.post()
+        self.assertTrue(len(request.session.peek_flash()), 1)
 
 
 class UserRemoveViewTestCase(base.UnitTestCase):
@@ -255,12 +321,22 @@ class UserRemoveViewTestCase(base.UnitTestCase):
 
     def test_post(self):
         context = testing.DummyResource()
+        context.username = 'username'
         request = testing.DummyRequest()
         context.remove = mock.Mock()
         unit = self.create_unit(context, request)
         ret = unit.post()
         self.assertIsInstance(ret, r.HTTPFound)
         context.remove.assert_called_with()
+
+    def test_ok_flash_message(self):
+        context = testing.DummyResource()
+        context.username = 'username'
+        request = testing.DummyRequest()
+        context.remove = mock.Mock()
+        unit = self.create_unit(context, request)
+        unit.post()
+        self.assertTrue(len(request.session.peek_flash()), 1)
 
 
 class UserEditFormViewTestCase(base.UnitTestCase):
@@ -288,6 +364,7 @@ class UserEditFormViewTestCase(base.UnitTestCase):
     @mock.patch('esauth.forms.UserForm')
     def test_post_ok(self, UserForm):
         context = testing.DummyResource()
+        context.username = 'username'
         context.save = mock.Mock()
         request = testing.DummyRequest()
         UserForm().validate.return_value = True
@@ -297,3 +374,14 @@ class UserEditFormViewTestCase(base.UnitTestCase):
         UserForm().populate_obj.assert_called_with(context)
         context.save.assert_called_with()
         self.assertIsInstance(ret, r.HTTPFound)
+
+    @mock.patch('esauth.forms.UserForm')
+    def test_post_ok_flash_message(self, UserForm):
+        context = testing.DummyResource()
+        context.username = 'username'
+        context.save = mock.Mock()
+        request = testing.DummyRequest()
+        UserForm().validate.return_value = True
+        unit = self.create_unit(context, request)
+        unit.post()
+        self.assertTrue(len(request.session.peek_flash()), 1)

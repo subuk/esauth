@@ -1,27 +1,25 @@
 {% extends "base_with_menu.jinja2" %}
 
 {% block content %}
-<div class="container">
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for group in groups %}
-      <tr>
-        <td><a href="{{ model_url(group, 'edit') }}">{{ group.entry.cn|join(',') }}</a></td>
-        <td><a title="Remove" href="{{ model_url(group, 'remove') }}"><i class="fa fa-times-circle"></i></a></td>
-      </tr>
-      {% endfor %}
-      <tr>
-        <td colspan="2">
-          <a class="btn btn-block btn-primary" href="{{ model_url(groups, 'add') }}">Add</a>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</div>
+<table class="table">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for group in groups %}
+    <tr>
+      <td><a href="{{ model_url(group, 'edit') }}">{{ group.entry.cn|join(',') }}</a></td>
+      <td><a title="Remove" href="{{ model_url(group, 'remove') }}"><i class="fa fa-times-circle"></i></a></td>
+    </tr>
+    {% endfor %}
+    <tr>
+      <td colspan="2">
+        <a class="btn btn-block btn-primary" href="{{ model_url(groups, 'add') }}">Add</a>
+      </td>
+    </tr>
+  </tbody>
+</table>
 {% endblock %}

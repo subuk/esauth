@@ -1,33 +1,31 @@
 {% extends "base_with_menu.jinja2" %}
 
 {% block content %}
-<div class="container">
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Username</th>
-        <th>Full name</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for user in users %}
-      <tr>
-        <td>
-          <a title="Edit" href="{{ model_url(user, 'edit') }}">{{ user.username }}</a>
-        </td>
-        <td>{{ user.full_name }}</td>
-        <td>
-          <a title="Remove" href="{{ model_url(user, 'remove') }}"><i class="fa fa-times-circle"></i></a>
-        </td>
-      </tr>
-      {% endfor %}
-      <tr>
-        <td colspan="4">
-          <a class="btn btn-block btn-primary" href="add/">Add</a>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</div>
+<table class="table">
+  <thead>
+    <tr>
+      <th>Username</th>
+      <th>Full name</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for user in users %}
+    <tr>
+      <td>
+        <a title="Edit" href="{{ model_url(user, 'edit') }}">{{ user.username }}</a>
+      </td>
+      <td>{{ user.full_name }}</td>
+      <td>
+        <a title="Remove" href="{{ model_url(user, 'remove') }}"><i class="fa fa-times-circle"></i></a>
+      </td>
+    </tr>
+    {% endfor %}
+    <tr>
+      <td colspan="4">
+        <a class="btn btn-block btn-primary" href="add/">Add</a>
+      </td>
+    </tr>
+  </tbody>
+</table>
 {% endblock %}

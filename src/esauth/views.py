@@ -58,6 +58,10 @@ class UserCreateFormView(object):
             return self.response
 
         self.context.add(form.ldap_dict())
+        self.request.session.flash({
+            'type': 'success',
+            'msg': 'User {username} successfully created!'.format(**form.data)
+        })
         return HTTPFound(model_path(self.context))
 
 
@@ -76,6 +80,10 @@ class UserEditFormView(UserCreateFormView):
 
         form.populate_obj(self.context)
         self.context.save()
+        self.request.session.flash({
+            'type': 'success',
+            'msg': 'User {0} successfully updated!'.format(self.context.username)
+        })
         return HTTPFound(model_path(self.context.__parent__))
 
 
@@ -126,6 +134,10 @@ class GroupAddView(object):
             return self.response
 
         self.context.add(form.ldap_dict())
+        self.request.session.flash({
+            'type': 'success',
+            'msg': 'Group {0} successfully created!'.format(form.data['name'])
+        })
         return HTTPFound(model_path(self.context[form.data['name']], 'edit'))
 
 
@@ -156,6 +168,10 @@ class GroupEditView(GroupAddView):
 
         self.context.entry.member = members
         self.context.entry.save()
+        self.request.session.flash({
+            'type': 'success',
+            'msg': 'Group {0} successfully updated!'.format(self.context.name)
+        })
         return HTTPFound(model_path(self.context.__parent__))
 
 
@@ -173,7 +189,12 @@ class GroupRemoveView(object):
 
     @view_config(request_method='POST')
     def post(self):
+        name = self.context.name
         self.context.remove()
+        self.request.session.flash({
+            'type': 'success',
+            'msg': 'Group {0} successfully removed!'.format(name)
+        })
         return HTTPFound(model_path(self.context.__parent__))
 
 
@@ -190,7 +211,12 @@ class UserRemoveView(object):
 
     @view_config(request_method='POST')
     def post(self):
+        username = self.context.username
         self.context.remove()
+        self.request.session.flash({
+            'type': 'success',
+            'msg': 'User {0} successfully removed!'.format(username)
+        })
         return HTTPFound(model_path(self.context.__parent__))
 
 

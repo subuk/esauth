@@ -1,9 +1,15 @@
+import random
+import string
+import logging
+
 import ldapom
 from pyramid.config import Configurator
 from pyramid.settings import asbool
 from pyramid.paster import bootstrap, setup_logging
 import esauth.resources
 import esauth.assets
+
+logger = logging.getLogger(__name__)
 
 
 def configure_webassets_jinja2_integration(config):
@@ -52,6 +58,24 @@ def configure_views(config):
     config.scan('esauth.views')
 
 
+def configure_session(config):
+    settings = config.get_settings()
+    default_session_key = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(30))
+
+    settings.setdefault('session.dir', '/tmp/esauth-sessions')
+    settings.setdefault('session.type', 'file')
+
+    settings.setdefault('session.data_dir', '{0}/data'.format(settings.get('session.dir')))
+    settings.setdefault('session.lock_dir', '{0}/data'.format(settings.get('session.dir')))
+    settings.setdefault('session.key', 'esauth_sk')
+    settings.setdefault('session.secret', default_session_key)
+
+    if settings.get('session.secret') == default_session_key:
+        logger.warning('Session key will be changed on the next restart. Please set session.secret config settings')
+
+    config.include('pyramid_beaker')
+
+
 def make_app(settings):
     config = Configurator(registry=esauth.registry)
     config.setup_registry(settings=settings)
@@ -60,6 +84,7 @@ def make_app(settings):
     configure_ldap_connection(config)
     configure_views(config)
     configure_template_engine(config)
+    configure_session(config)
     configure_webassets(config)
     configure_webassets_jinja2_integration(config)
     config.set_root_factory(esauth.resources.Root)

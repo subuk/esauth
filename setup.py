@@ -5,6 +5,7 @@ requires = [
     'pyramid',
     'pyramid_jinja2',
     'pyramid_webassets',
+    'pyramid_beaker',
     'waitress',
     'ldapom',
 ]
