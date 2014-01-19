@@ -194,6 +194,28 @@ class GroupEditViewTestCase(base.UnitTestCase):
         GroupForm().validate.assert_called_with()
         self.assertIsInstance(ret, r.HTTPFound)
 
+    @mock.patch('esauth.forms.GroupForm')
+    def test_post_no_members(self, GroupForm):
+        context = testing.DummyResource()
+        get_all_users = mock.Mock()
+        context.get_all_users = get_all_users
+        context.entry = mock.Mock()
+        context.get_user_entry = mock.Mock()
+        data = {
+            'name': 'hello',
+            'members': []
+        }
+        request = testing.DummyRequest(data)
+
+        GroupForm().validate.return_value = True
+        GroupForm().data = data
+        get_all_users.return_value = []
+
+        unit = self.create_unit(context, request)
+        ret = unit.post()
+        self.assertEqual(context.entry.member, [''])
+        self.assertIsInstance(ret, r.HTTPFound)
+
 
 class GroupDeleteViewTestCase(base.UnitTestCase):
 
@@ -215,3 +237,25 @@ class GroupDeleteViewTestCase(base.UnitTestCase):
         ret = unit.post()
         context.remove.assert_called_with()
         self.assertIsInstance(ret, r.HTTPFound)
+
+
+class UserRemoveViewTestCase(base.UnitTestCase):
+
+    def create_unit(self, context, request):
+        return views.UserRemoveView(context, request)
+
+    def test_get(self):
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        unit = self.create_unit(context, request)
+        ret = unit.get()
+        self.assertDictEqual(ret, {})
+
+    def test_post(self):
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        context.remove = mock.Mock()
+        unit = self.create_unit(context, request)
+        ret = unit.post()
+        self.assertIsInstance(ret, r.HTTPFound)
+        context.remove.assert_called_with()

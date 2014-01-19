@@ -88,20 +88,42 @@ class LDAPDataSourceMixin(object):
 
 class UserResource(LDAPDataSourceMixin, object):
 
-    @reify
-    def __name__(self):
-        return list(self.entry.uid)[0]
-
     def __init__(self, request, entry):
         self.request = request
         self.entry = entry
 
-    def as_dict(self):
-        return {
-            'uid': list(self.entry.uid)[0],
-            'uidNumber': self.entry.uidNumber,
-            'gidNumber': self.entry.gidNumber,
-        }
+    @reify
+    def __name__(self):
+        return self.username
+
+    def __unicode__(self):
+        return u"{0} ({1})".format(self.full_name, self.username)
+
+    @reify
+    def username(self):
+        return list(self.entry.uid)[0]
+
+    @reify
+    def first_name(self):
+        return list(self.entry.givenName)[0]
+
+    @reify
+    def last_name(self):
+        return list(self.entry.sn)[0]
+
+    @reify
+    def full_name(self):
+        return u"{0} {1}".format(self.first_name, self.last_name)
+
+    def remove(self):
+        for group in self.get_all_groups():
+            if self.entry.dn in group.member:
+                group.fetch()
+                group.member.remove(self.entry.dn)
+                if not group.member:
+                    group.member = ""
+                group.save()
+        self.entry.delete()
 
 
 class UserListResource(LDAPDataSourceMixin, object):

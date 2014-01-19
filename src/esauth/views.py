@@ -13,7 +13,7 @@ def dashboard_view(context, request):
 @view_config(context=resources.UserListResource, renderer='user_list.jinja2')
 def users_list_view(context, request):
     return {
-        'users': [u.entry for u in context]
+        'users': context,
     }
 
 
@@ -144,6 +144,23 @@ class GroupEditView(GroupAddView):
 @view_defaults(context=resources.GroupResource, renderer='group_remove.jinja2', name='remove')
 class GroupRemoveView(object):
 
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.response = {}
+
+    @view_config(request_method='GET')
+    def get(self):
+        return self.response
+
+    @view_config(request_method='POST')
+    def post(self):
+        self.context.remove()
+        return HTTPFound(model_path(self.context.__parent__))
+
+
+@view_defaults(context=resources.UserResource, renderer='user_remove.jinja2', name='remove')
+class UserRemoveView(object):
     def __init__(self, context, request):
         self.context = context
         self.request = request

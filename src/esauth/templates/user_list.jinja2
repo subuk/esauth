@@ -5,19 +5,19 @@
   <table class="table">
     <thead>
       <tr>
-        <th>UID</th>
-        <th>UID Number</th>
-        <th>GID Number</th>
-        <th>Home directory</th>
+        <th>Username</th>
+        <th>Full name</th>
+        <th></th>
       </tr>
     </thead>
     <tbody>
       {% for user in users %}
       <tr>
-        <td>{{ user.uid |join(', ') }}</td>
-        <td>{{ user.uidNumber }}</td>
-        <td>{{ user.gidNumber }}</td>
-        <td>{{ user.homeDirectory }}</td>
+        <td>{{ user.username }}</td>
+        <td>{{ user.full_name }}</td>
+        <td>
+          <a title="Remove" href="{{ model_url(user, 'remove') }}"><i class="fa fa-times-circle"></i></a>
+        </td>
       </tr>
       {% endfor %}
       <tr>

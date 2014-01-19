@@ -77,6 +77,10 @@ class GroupResourceTestCase(base.UnitTestCase):
         ret = unicode(self.unit)
         self.assertEqual(ret, u'Name')
 
+    def test_remove(self):
+        self.unit.remove()
+        self.entry.delete.assert_called_with()
+
 
 class UserListResourceTestCase(base.UnitTestCase):
 
@@ -117,16 +121,45 @@ class UserResourceTestCase(base.UnitTestCase):
         self.entry.gidNumber = 10000
         self.unit = resources.UserResource(self.request, self.entry)
 
-    def test_as_dict(self):
-        ret = self.unit.as_dict()
-        self.assertIsInstance(ret, dict)
-        self.assertEqual(ret['uid'], 'testuser')
-        self.assertEqual(ret['uidNumber'], 10000)
-        self.assertEqual(ret['gidNumber'], 10000)
-
     def test_name(self):
         self.entry.uid = set(['oneone'])
         self.assertEqual(self.unit.__name__, 'oneone')
+
+    def test_unicode(self):
+        self.entry.uid = set(['uid'])
+        self.entry.givenName = set(['F'])
+        self.entry.sn = set(['L'])
+        self.assertEqual(unicode(self.unit), u'F L (uid)')
+
+    @mock.patch('esauth.resources.LDAPDataSourceMixin.get_all_groups')
+    def test_remove(self, get_all_groups):
+        self.entry.dn = 'cn=entry'
+        grp1 = mock.Mock()
+        grp1.member = ['cn=entry', 'lv=xxx']
+        grp2 = mock.Mock()
+        grp2.member = ['lv=xxx']
+        get_all_groups.return_value = [grp1, grp2]
+
+        self.unit.remove()
+
+        self.assertEqual(grp1.member, ['lv=xxx'])
+        self.entry.delete.assert_called_with()
+        grp1.save.assert_called_with()
+
+    @mock.patch('esauth.resources.LDAPDataSourceMixin.get_all_groups')
+    def test_remove_last_member(self, get_all_groups):
+        self.entry.dn = 'cn=entry'
+        grp1 = mock.Mock()
+        grp1.member = ['cn=entry']
+        grp2 = mock.Mock()
+        grp2.member = ['lv=xxx']
+        get_all_groups.return_value = [grp1, grp2]
+
+        self.unit.remove()
+
+        self.assertEqual(grp1.member, '')
+        self.entry.delete.assert_called_with()
+        grp1.save.assert_called_with()
 
 
 class LDAPDataSourceMixinTestCase(base.UnitTestCase):

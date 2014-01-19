@@ -1,0 +1,10 @@
+{% extends "base_with_menu.jinja2" %}
+
+{% block content %}
+<div class="container">
+  <form action="" method="post">
+    <button class="btn btn-danger">Remove user {{ context }}</button>
+    <a class="btn btn-default" href="{{ model_url(context.__parent__) }}">Cancel</a>
+  </form>
+</div>
+{% endblock %}
