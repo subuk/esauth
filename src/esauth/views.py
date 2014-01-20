@@ -4,10 +4,13 @@ from pyramid.httpexceptions import HTTPFound
 from pyramid.traversal import model_path
 import esauth.resources as resources
 import esauth.forms as forms
+import esauth.models as models
+
+LOGIN_URL = '/login'
 
 
 @view_config(context=resources.Root, renderer='base_with_menu.jinja2')
-def dashboard_view(context, request):
+def dashboard_view(context, request):  # pragma: no cover
     return {}
 
 
@@ -25,10 +28,12 @@ class UserCreateFormView(object):
         self.context = context
         self.request = request
         self.response = {}
+        self.model = models.User()
 
     def get_form_kwargs(self):
         return {
             'formdata': self.request.POST or None,
+            'obj': self.model,
         }
 
     def get_form(self):
@@ -58,7 +63,8 @@ class UserCreateFormView(object):
             form.username.errors.append(u"User {username} already exist".format(**form.data))
             return self.response
 
-        self.context.add(form.ldap_dict())
+        form.populate_obj(self.model)
+        self.model.save()
         self.request.session.flash({
             'type': 'success',
             'msg': 'User {username} successfully created!'.format(**form.data)
@@ -69,21 +75,24 @@ class UserCreateFormView(object):
 @view_defaults(context=resources.UserResource, renderer='user/form.jinja2', name='edit')
 class UserEditFormView(UserCreateFormView):
 
-    def get_form_kwargs(self):
-        kwargs = super(UserEditFormView, self).get_form_kwargs()
-        kwargs['obj'] = self.context
-        return kwargs
+    def __init__(self, context, request):
+        super(UserEditFormView, self).__init__(context, request)
+        self.model = context.model
+
+    def get_form(self):
+        form = super(UserEditFormView, self).get_form()
+        del form.username
+        return form
 
     def post(self):
         form = self.get_form()
         if not form.validate():
             return self.response
-
-        form.populate_obj(self.context)
-        self.context.save()
+        form.populate_obj(self.model)
+        self.model.save()
         self.request.session.flash({
             'type': 'success',
-            'msg': 'User {0} successfully updated!'.format(self.context.username)
+            'msg': 'User {0} successfully updated!'.format(self.context.model.username)
         })
         return HTTPFound(model_path(self.context.__parent__))
 
@@ -95,19 +104,20 @@ class GroupAddView(object):
         self.context = context
         self.request = request
         self.response = {}
+        self.model = models.Group()
 
     def get_form_kwargs(self):
         return {
             'formdata': self.request.POST,
+            'obj': self.model,
         }
 
     def get_form(self):
         form = forms.GroupForm(**self.get_form_kwargs())
 
         form.members.choices = []
-        for user in self.context.get_all_users():
-            uid = user.uid.pop()
-            form.members.choices.append((uid, uid))
+        for user in models.User.all():
+            form.members.choices.append((user.get_dn(), user.username))
 
         self.response.update({
             'form': form,
@@ -134,7 +144,8 @@ class GroupAddView(object):
             form.name.errors.append(u"Group {name} already exist".format(**form.data))
             return self.response
 
-        self.context.add(form.ldap_dict())
+        form.populate_obj(self.model)
+        self.model.save()
         self.request.session.flash({
             'type': 'success',
             'msg': 'Group {0} successfully created!'.format(form.data['name'])
@@ -145,10 +156,9 @@ class GroupAddView(object):
 @view_defaults(context=resources.GroupResource, renderer='group/form.jinja2', name='edit')
 class GroupEditView(GroupAddView):
 
-    def get_form_kwargs(self):
-        kwargs = super(GroupEditView, self).get_form_kwargs()
-        kwargs['obj'] = self.context
-        return kwargs
+    def __init__(self, context, request):
+        super(GroupEditView, self).__init__(context, request)
+        self.model = context.model
 
     def get_form(self):
         form = super(GroupEditView, self).get_form()
@@ -160,18 +170,19 @@ class GroupEditView(GroupAddView):
         if not form.validate():
             return self.response
 
-        members = []
-        for uid in form.data['members']:
-            member = self.context.get_user_entry(uid)
-            members.append(member.dn)
-        if not members:
-            members = ['']
+        # members = []
+        # for uid in form.data['members']:
+        #     member = self.context.get_user_entry(uid)
+        #     members.append(member.dn)
+        # if not members:
+        #     members = ['']
 
-        self.context.entry.member = members
-        self.context.entry.save()
+        form.populate_obj(self.model)
+        self.model.save()
+
         self.request.session.flash({
             'type': 'success',
-            'msg': 'Group {0} successfully updated!'.format(self.context.name)
+            'msg': 'Group {0} successfully updated!'.format(self.model.name)
         })
         return HTTPFound(model_path(self.context.__parent__))
 
@@ -183,6 +194,7 @@ class GroupRemoveView(object):
         self.context = context
         self.request = request
         self.response = {}
+        self.model = context.model
 
     @view_config(request_method='GET')
     def get(self):
@@ -190,8 +202,8 @@ class GroupRemoveView(object):
 
     @view_config(request_method='POST')
     def post(self):
-        name = self.context.name
-        self.context.remove()
+        name = self.model.name
+        self.model.remove()
         self.request.session.flash({
             'type': 'success',
             'msg': 'Group {0} successfully removed!'.format(name)
@@ -204,6 +216,7 @@ class UserRemoveView(object):
     def __init__(self, context, request):
         self.context = context
         self.request = request
+        self.model = context.model
         self.response = {}
 
     @view_config(request_method='GET')
@@ -212,8 +225,8 @@ class UserRemoveView(object):
 
     @view_config(request_method='POST')
     def post(self):
-        username = self.context.username
-        self.context.remove()
+        username = self.model.username
+        self.model.remove()
         self.request.session.flash({
             'type': 'success',
             'msg': 'User {0} successfully removed!'.format(username)
@@ -228,11 +241,8 @@ def group_list_view(context, request):
     }
 
 
-LOGIN_URL = '/login'
-
-
 @forbidden_view_config(renderer='403.jinja2')
-def forbidden_view(response, request):
+def forbidden_view(response, request):  # pragma: no cover
     if not getattr(request, 'user', None):
         return HTTPFound("{0}?next={1}".format(LOGIN_URL, request.path))
     request.response.status = 403
@@ -240,7 +250,7 @@ def forbidden_view(response, request):
 
 
 @view_config(context=resources.Root, name='logout')
-def logout(request):
+def logout(request):  # pragma: no cover
     security.forget(request)
     return HTTPFound('/')
 

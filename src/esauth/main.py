@@ -9,6 +9,7 @@ from pyramid.settings import asbool
 from pyramid.paster import bootstrap, setup_logging
 import esauth.resources
 import esauth.assets
+import esauth.models
 
 logger = logging.getLogger(__name__)
 
@@ -41,12 +42,16 @@ def configure_template_engine(config):
 
 def configure_ldap_connection(config):
     settings = config.get_settings()
-    config.registry['lc'] = ldapom.LDAPConnection(
+    ldap_connection = ldapom.LDAPConnection(
         uri=settings.get('ldap.uri'),
         base=settings.get('ldap.login'),
         bind_dn=settings.get('ldap.bind_dn'),
         bind_password=settings.get('ldap.bind_password')
     )
+    config.registry['lc'] = config.registry['ldap_connection'] = ldap_connection
+    esauth.orm.Base._connection = ldap_connection
+    esauth.models.User.base_dn = settings.get('ldap.users_base')
+    esauth.models.Group.base_dn = settings.get('ldap.groups_base')
 
 
 def configure_common_debug_options(config):
@@ -73,7 +78,10 @@ def configure_session(config):
     settings.setdefault('session.secret', default_session_key)
 
     if settings.get('session.secret') == default_session_key:
-        logger.warning('Session key will be changed on the next restart. Please set session.secret config settings')
+        logger.warning(
+            'Session key will be changed during next restart.'
+            'Please set session.secret config settings'
+        )
 
     config.include('pyramid_beaker')
 
@@ -106,10 +114,10 @@ def make_app(settings):
     return config.make_wsgi_app()
 
 
-def paste_wsgi_app(global_config, **settings):
+def paste_wsgi_app(global_config, **settings):  # pragma: no cover
     return make_app(settings)
 
 
-def scripting_boostrap(config_uri):
+def scripting_boostrap(config_uri):  # pragma: no cover
     setup_logging(config_uri)
     return bootstrap(config_uri)

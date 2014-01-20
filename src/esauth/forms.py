@@ -20,7 +20,7 @@ class RequiredTogether(validators.Required):
 
         validation_needed = False
         for field_obj in group:
-            if field_obj.raw_data[0]:
+            if field_obj.raw_data and field_obj.raw_data[0]:
                 validation_needed = True
                 break
 
@@ -47,49 +47,16 @@ class UserForm(forms.Form):
     home_directory = forms.StringField('Home directory', [RequiredTogether('posix_account'), validators.Length(min=3, max=255)])
     login_shell = forms.StringField('Login shell', [RequiredTogether('posix_account'), validators.Optional(), validators.Length(min=3, max=255)])
 
-    def ldap_dict(self):
-        return {
-            'uid': self.data['username'],
-            'givenName': self.data['first_name'],
-            'sn': self.data['last_name'],
-            'description': self.data['description'],
-            'userPassword': self.data['password'],
-            'uidNumber': self.data['uid_number'],
-            'gidNumber': self.data['gid_number'],
-            'homeDirectory': self.data['home_directory'],
-            'loginShell': self.data['login_shell'],
-        }
-
-
-class PosixUserAccountForm(forms.Form):
-    uid_number = forms.IntegerField('UID Number', [validators.NumberRange(min=10000, max=65535)])
-    gid_number = forms.IntegerField('GID Number', [validators.NumberRange(min=10000, max=65535)])
-    home_directory = forms.StringField('Home directory', [validators.Length(min=3, max=255)])
-    login_shell = forms.StringField('Login shell', [validators.Optional(), validators.Length(min=3, max=255)])
-
-    def ldap_dict(self):
-        return {
-            'uidNumber': self.data['uid_number'],
-            'gidNumber': self.data['gid_number'],
-            'homeDirectory': self.data['home_directory'],
-            'loginShell': self.data['login_shell'],
-        }
-
 
 class GroupForm(forms.Form):
     name = forms.StringField("Name", [validators.Required()])
     members = forms.SelectMultipleField('Members')
 
-    def ldap_dict(self):
-        return {
-            'cn': self.data['name'],
-        }
-
 
 class LoginForm(forms.Form):
     password = forms.PasswordField()
 
-    def validate_password(self, field):
+    def validate_password(self, field):  # pragma: no cover
         lc = esauth.registry['lc']
         pw = field.data
         login = esauth.registry.settings['ldap.bind_dn']

@@ -1,4 +1,4 @@
-import os
+
 from setuptools import setup, find_packages
 
 read = lambda path: open(path).read()
@@ -18,6 +18,7 @@ dev_requires = [
     'mock',
     'coverage',
     'pyramid_debugtoolbar',
+    'webtest',
 ]
 
 setup(
@@ -25,7 +26,7 @@ setup(
     version='0.1',
     author='Matvey Kruglov',
     author_email='kubus@openpz.org',
-    url='http://bitbucket.org/subuk/esauth',
+    url='http://github.com/subuk/esauth',
     description='Simple LDAP account management tool',
     long_description=read('README.rst'),
     packages=find_packages('src'),
@@ -33,7 +34,7 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=requires,
-    test_suite="tests",
+    test_suite="nose.collector",
     extras_require={
         'dev': dev_requires,
     },

@@ -11,11 +11,12 @@
   </thead>
   <tbody>
     {% for user in users %}
+
     <tr>
       <td>
-        <a title="Edit" href="{{ model_url(user, 'edit') }}">{{ user.username }}</a>
+        <a title="Edit" href="{{ model_url(user, 'edit') }}">{{ user.model.username }}</a>
       </td>
-      <td>{{ user.full_name }}</td>
+      <td>{{ user.model.full_name }}</td>
       <td>
         <a title="Remove" href="{{ model_url(user, 'remove') }}"><i class="fa fa-times-circle"></i></a>
       </td>
