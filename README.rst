@@ -39,3 +39,17 @@ Answer:
     ESAuth try to run slapd instance with config from tests/functional/test_server/slapd.conf.
     Check that nothing does not block access to this file (selinux or apparmor, usually)
     Also, check test server log at /tmp/esauth-test-slapd.log.
+
+
+Changelog
+---------
+
+v0.2
+
+    * Use jQuery.choosen for all form fields
+    * Models layer
+
+v0.1
+
+    * Initial package version.
+    * CRUD for users and groups.
