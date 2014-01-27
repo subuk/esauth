@@ -31,7 +31,7 @@ class GroupViewsTestCase(base.FunctionalBaseTestCase):
         group = models.Group.get('grp12')
         self.assertIsNotNone(group)
         self.assertEqual(group.name, 'grp12')
-        self.assertEqual(group.members, ['', u1.get_dn()])
+        self.assertEqual(group.members, [u1.get_dn()])
 
     def test_group_edit_get(self):
         group = models.Group(name='one')
@@ -49,7 +49,7 @@ class GroupViewsTestCase(base.FunctionalBaseTestCase):
             'members': [u2.get_dn()]
         })
         group.refresh()
-        self.assertEqual(group.members, ['', u2.get_dn()])
+        self.assertEqual(group.members, [u2.get_dn()])
 
     def test_group_remove_get(self):
         group = models.Group(name='one')
@@ -70,4 +70,4 @@ class GroupViewsTestCase(base.FunctionalBaseTestCase):
         group.save()
         self.app.post('/users/user1/remove', status=302)
         group.refresh()
-        self.assertEqual(group.members, [''])
+        self.assertEqual(group.members, [])

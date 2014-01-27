@@ -12,7 +12,7 @@ class Group(orm.Base):
 
     @members.decoder
     def decode_members(self, value):
-        ret = ['']
+        ret = []
         for member_dn in value:
             if not member_dn:
                 continue
@@ -21,6 +21,12 @@ class Group(orm.Base):
                 continue
             ret.append(member_dn)
         return ret
+
+    @members.encoder
+    def encode_members(self, value):
+        if not value:
+            value = ['']
+        return value
 
 
 class User(orm.Base):
@@ -37,12 +43,6 @@ class User(orm.Base):
     gid_number = orm.Field('gidNumber', nullable=True)
     home_directory = orm.Field('homeDirectory', nullable=True)
     login_shell = orm.Field('loginShell', nullable=True)
-
-    @description.encoder
-    def encode_description(self, value):
-        if not value:
-            return
-        return value
 
     @password.encoder
     def encode_password(self, value):

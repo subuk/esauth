@@ -14,14 +14,13 @@ class Field(object):
         self.default = default
         self.name = name
         self.primary = primary
-        self.singlevalue = singlevalue
         self.nullable = nullable
         self.null_if_blank = null_if_blank
 
-    def _get_value(self, obj):
+    def _get_value(self, obj, raw=False):
         key = '_field_{0}_value'.format(self.name)
-        value = getattr(obj, key, self.default)
-        if self._decoder:
+        value = getattr(obj, key)
+        if self._decoder and not raw:
             value = self._decoder(obj, value)
         return value
 
@@ -107,9 +106,7 @@ class Base(object):
 
     def __init__(self, **kwargs):
         for field_name, field in self._fields.items():
-            if field_name in kwargs:
-                setattr(self, field_name, kwargs.pop(field_name))
-                # field.value = kwargs.pop(field_name)
+            setattr(self, field_name, kwargs.pop(field_name, field.default))
 
         if kwargs:
             raise TypeError('Invalid kwargs passed: {0}'.format(', '.join(kwargs.keys())))
@@ -180,7 +177,7 @@ class Base(object):
         entry = ldapom.LDAPEntry(self._connection, self.get_dn())
 
         for field_name, field in self._fields.items():
-            value = getattr(self, field_name)
+            value = field._get_value(self, raw=True)
             if not field.nullable and value is None:
                 raise ValueError('Field {0}.{1} must not be None'.format(self.__class__.__name__, field_name))
             if field.null_if_blank and not value:
