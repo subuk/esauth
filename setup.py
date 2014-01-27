@@ -23,7 +23,7 @@ dev_requires = [
 
 setup(
     name='esauth',
-    version='0.1',
+    version='0.2',
     author='Matvey Kruglov',
     author_email='kubus@openpz.org',
     url='http://github.com/subuk/esauth',
