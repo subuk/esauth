@@ -107,10 +107,16 @@ class GroupAddView(object):
         self.model = models.Group()
 
     def get_form_kwargs(self):
-        return {
-            'formdata': self.request.POST,
-            'obj': self.model,
+        kwargs = {
+            'formdata': None,
+            'obj': None,
         }
+        if self.request.method == 'POST':
+            kwargs['formdata'] = self.request.POST
+        else:
+            kwargs['obj'] = self.model
+
+        return kwargs
 
     def get_form(self):
         form = forms.GroupForm(**self.get_form_kwargs())
