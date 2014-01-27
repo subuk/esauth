@@ -170,13 +170,6 @@ class GroupEditView(GroupAddView):
         if not form.validate():
             return self.response
 
-        # members = []
-        # for uid in form.data['members']:
-        #     member = self.context.get_user_entry(uid)
-        #     members.append(member.dn)
-        # if not members:
-        #     members = ['']
-
         form.populate_obj(self.model)
         self.model.save()
 

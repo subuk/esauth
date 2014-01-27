@@ -22,7 +22,7 @@
     <div id="wrap">
 
       <!-- Fixed navbar -->
-      <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+      <div class="navbar navbar-default" role="navigation">
         <div class="container">
           <div class="navbar-header">
             <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
@@ -60,7 +60,7 @@
 
     <div id="footer">
       <div class="container">
-        <p class="text-muted">Place sticky footer content here.</p>
+        <p class="text-muted">&nbsp;</p>
       </div>
     </div>
 
@@ -71,6 +71,11 @@
     {% assets "all_js" %}
       <script type="text/javascript" src="{{ ASSET_URL }}"></script>
     {% endassets %}
+    <script type="text/javascript">
+      $(function(){
+        $("select").chosen();
+      });
+    </script>
     {% block extra_js %}
     {% endblock %}
   </body>
