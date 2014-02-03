@@ -2,6 +2,7 @@
 import wtforms as forms
 import wtforms.validators as validators
 import esauth
+import esauth.models as models
 
 ValidationError = forms.ValidationError
 
@@ -47,10 +48,18 @@ class UserForm(forms.Form):
     home_directory = forms.StringField('Home directory', [RequiredTogether('posix_account'), validators.Length(min=3, max=255)])
     login_shell = forms.StringField('Login shell', [RequiredTogether('posix_account'), validators.Optional(), validators.Length(min=3, max=255)])
 
+    def validate_username(self, field):
+        if models.User.get(self.data['username']):
+            raise ValidationError(u"User {username} already exist".format(**self.data))
+
 
 class GroupForm(forms.Form):
     name = forms.StringField("Name", [validators.Required()])
     members = forms.SelectMultipleField('Members')
+
+    def validate_name(self, field):
+        if models.Group.get(self.data['name']):
+            raise ValidationError(u"Group {name} already exist".format(**self.data))
 
 
 class LoginForm(forms.Form):
