@@ -1,19 +1,6 @@
 from pyramid.decorator import reify
 from pyramid.security import Allow, Authenticated
-import esauth
-import esauth.models
-
-
-class LDAPEntryAlreadyExist(Exception):
-    pass
-
-
-class UserAlreadyExist(LDAPEntryAlreadyExist):
-    pass
-
-
-class GroupAlreadyExist(LDAPEntryAlreadyExist):
-    pass
+from esauth import models
 
 
 class UserResource(object):
@@ -38,7 +25,7 @@ class UserListResource(object):
         self.request = request
 
     def __getitem__(self, username):
-        user = esauth.models.User.get(username)
+        user = models.User.get(username)
         if not user:
             raise KeyError(username)
 
@@ -47,7 +34,7 @@ class UserListResource(object):
         return resource
 
     def __iter__(self):
-        for user in esauth.models.User.all():
+        for user in models.User.all():
             resource = UserResource(self.request, user)
             resource.__parent__ = self
             yield resource
@@ -75,7 +62,7 @@ class GroupListResource(object):
         self.request = request
 
     def __getitem__(self, name):
-        group = esauth.models.Group.get(name)
+        group = models.Group.get(name)
         if not group:
             raise KeyError(group)
 
@@ -84,7 +71,7 @@ class GroupListResource(object):
         return resource
 
     def __iter__(self):
-        for entry in esauth.models.Group.all():
+        for entry in models.Group.all():
             resource = GroupResource(self.request, entry)
             resource.__parent__ = self
             yield resource
