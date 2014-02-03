@@ -16,8 +16,8 @@ requires = [
 dev_requires = [
     'nose',
     'mock',
-    'coverage',
     'pyramid_debugtoolbar',
+    'coverage',
     'webtest',
 ]
 
@@ -36,7 +36,7 @@ setup(
     install_requires=requires,
     test_suite="nose.collector",
     extras_require={
-        'dev': dev_requires,
+        'develop': dev_requires,
     },
     entry_points={
         'paste.app_factory': [

@@ -22,10 +22,9 @@ Development
 
 ::
 
-    virtualenv ~/esauth
-    . ~/esauth/bin/activate
+    virtualenv ~/envs/esauth
+    . ~/envs/esauth/bin/activate
     python setup.py develop
-    pip install esauth[dev]
     python setup.py test
     pserve development.ini
 
